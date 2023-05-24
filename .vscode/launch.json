@@ -1,0 +1,10 @@
+{
+  "configurations": [
+      {
+          "name": "Download and Run wro/2023/main.py",
+          "type": "ev3devBrowser",
+          "request": "launch",
+          "program": "/home/robot/wro/2023/main.py"
+      }
+  ]
+}
