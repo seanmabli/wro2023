@@ -24,12 +24,14 @@ def main():
   straight(115)
   # _thread.start_new_thread(markingblockscanthread, ())
   sweep(sensor=LeftColor, direction="left")
-  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, threshold=12, startncap=350)
+  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350)
+  """
   lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
   straight(170)
   straight(-170)
   durn(turn=-100, type="tank")
-  durn(turn=90, circleradius=-40, type="circle")
+  durn(turn=90, circleradius=-20, type="circle")
+  """
 
 def markingblockscanthread():
   while True:
@@ -116,18 +118,15 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # gurn = 
     LeftMotor.hold()
     RightMotor.hold()
 
-def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, startdistance=0, kp=0.25, ki=0, kd=0.5, startncap=[], estdistance=0, threshold='x',): # wait distance is the # of mm after a black it waits until continue detecting blacks
+def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, startdistance=0, kp=0.25, ki=0, kd=0.5, startncap=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
     raise Exception('sideofsensor must be "in" or "out"')
-  if threshold not in ['t', 'x'] and not isinstance(threshold, int) and isinstance(threshold, float):
-    raise Exception('threshold must be "t" or "x" or an integer')
-
-  if threshold == 't': # 3 way intercetion
-    threshold = 22
-  elif threshold == 'x': # 4 way intercetion
-    threshold = 15
+  if not isinstance(blackthreshold, int) and isinstance(blackthreshold, float):
+    raise Exception('blackthreshold must be an integer')
+  if not isinstance(whitethreshold, int) and isinstance(whitethreshold, float) and whitethreshold != None:
+    raise Exception('whitethreshold must be an integer')
 
   if sensor == LeftColor:
     sideofsensor = 'in' if sideofsensor == 'out' else 'out'
@@ -150,8 +149,12 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
   lastdistance = abs(robot.distance())
   lastdistancechange = 0
   num = 0
+  white = 0
   while count < blacks:
-    if (LeftColor.reflection() + RightColor.reflection()) / 2 < threshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()):
+    print((LeftColor.reflection() + RightColor.reflection()) / 2)
+    if (LeftColor.reflection() + RightColor.reflection()) / 2 > whitethreshold:
+      white += 1
+    if (LeftColor.reflection() + RightColor.reflection()) / 2 < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()) and white > 0:
       count += 1
       lastdistance = abs(robot.distance())
       print((LeftColor.reflection() + RightColor.reflection()) / 2)
