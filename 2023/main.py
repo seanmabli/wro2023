@@ -21,17 +21,26 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 def main():
+  """
   straight(115)
-  # _thread.start_new_thread(markingblockscanthread, ())
+  _thread.start_new_thread(markingblockscanthread, ())
   sweep(sensor=LeftColor, direction="left")
   lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350)
-  """
   lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
-  straight(170)
-  straight(-170)
+  straight(175)
+  straight(-175)
   durn(turn=-100, type="tank")
-  durn(turn=90, circleradius=-20, type="circle")
+  durn(turn=90, circleradius=-40, type="circle", speed=300)
+  durn(turn=-160, type="tank")
+  straight(-150)
+  boatGrab(oc="close")
+  straight(100)
+  sTurn(rl="left", fb="forward", turn=30, drive=200)
   """
+  LeftMotor.dc(100)
+  RightMotor.dc(100)
+  time.sleep(1)
+
 
 def markingblockscanthread():
   while True:
@@ -83,7 +92,7 @@ def square(threshold, speed):
       leftBlack = True
       LeftMotor.hold()
 
-def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # gurn = degree turn
+def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = degree turn
   if type not in ['tank', 'pivot', 'circle']:
     raise Exception('type must be "tank" or "pivot" or "circle"')
   if fb not in ['forward', 'backward']:
@@ -232,7 +241,7 @@ def boatGrab(oc='open', percentage=1, pinch=True):
     time.sleep(0.1)
     BoatMotor.run_angle(400, 200 * percentage)
   elif oc == 'close':
-    BoatMotor.run(-200)
+    BoatMotor.run(200)
     time.sleep(0.6 * percentage)
     if not pinch:
       BoatMotor.stop()
@@ -286,6 +295,31 @@ def sweep(sensor, direction, speed=50):
   targetangle = info[closestindex][1]
 
   durn(robot.angle() - targetangle, type='tank', fb='forward', speed=speed)
+
+def sTurn(rl, fb, turn, type='pivot', drive=0, turnSpeed=100): # rl = right-left, fb = forward-backward, turn = turn degrees(posotive), drive = drive between turns(positive)
+  if rl not in ['right', 'left']:
+    raise Exception('rl must be "right" or "left"')
+  if fb not in ['forward', 'backward']:
+    raise Exception('fb must be "forward" or "backward"')
+  
+  if rl == 'right':
+    turn *= -1
+  if fb == 'backward':
+    drive *= -1
+    conificient = 1
+  else:
+    conificient = -1
+
+  startangle = robot.angle()
+
+  durn(turn, type=type, fb=fb, speed=turnSpeed)
+  if drive != 0:
+    straight(drive)
+  durn(conificient * (startangle - robot.angle()), type=type, fb=fb, speed=turnSpeed)
+
+def straight(distance):
+  robot.straight(distance)
+  robot.stop()
 
 starttime = time.time()
 main()
