@@ -21,26 +21,29 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 def main():
-  """
+  """ 
   straight(115)
   _thread.start_new_thread(markingblockscanthread, ())
   sweep(sensor=LeftColor, direction="left")
-  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350)
+  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
   lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
-  straight(175)
-  straight(-175)
-  durn(turn=-100, type="tank")
-  durn(turn=90, circleradius=-40, type="circle", speed=300)
+  straight(140)
+  straight(-140)
+  durn(turn=-110, type="tank")
+  durn(turn=115, circleradius=-50, type="circle", speed=300)
   durn(turn=-160, type="tank")
-  straight(-150)
+  straight(-130)
   boatGrab(oc="close")
-  straight(100)
-  sTurn(rl="left", fb="forward", turn=30, drive=200)
   """
-  LeftMotor.dc(100)
-  RightMotor.dc(100)
-  time.sleep(1)
-
+  """
+  straight(180)
+  durn(turn=170, type="tank")
+  straight(-90)
+  boatGrab(oc="open")
+  straight(70)
+  durn(turn=-160, type="tank")
+  """
+  armGrab(ud="up")
 
 def markingblockscanthread():
   while True:
@@ -127,6 +130,8 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = 
     LeftMotor.hold()
     RightMotor.hold()
 
+
+
 def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, startdistance=0, kp=0.25, ki=0, kd=0.5, startncap=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
@@ -178,7 +183,7 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
       error = sensor.reflection() - target
     integral += error
     derivative = error - lasterror
-    turn = kp * error + ki * integral + kd * derivative
+    turn = kp * error
     lasterror = error
 
     robot.drive(speed[num], turn)
@@ -239,20 +244,21 @@ def boatGrab(oc='open', percentage=1, pinch=True):
   if oc == 'open':
     BoatMotor.stop()
     time.sleep(0.1)
-    BoatMotor.run_angle(400, 200 * percentage)
+    BoatMotor.run_angle(400, -100 * percentage)
   elif oc == 'close':
-    BoatMotor.run(200)
-    time.sleep(0.6 * percentage)
+    BoatMotor.run(300)
+    time.sleep(0.5 * percentage)
     if not pinch:
       BoatMotor.stop()
 
-def armGrab(oc='open'):
-  if oc == 'open':
+def armGrab(ud='up'):
+  if ud == 'down':
     time.sleep(0.001)
     ArmMotor.run_angle(400, -200)
-  elif oc == 'close':
-    ArmMotor.run(200)
-    time.sleep(1)
+  elif ud == 'up':
+    ArmMotor.run(-400)
+    time.sleep(0.6)
+    ArmMotor.run_angle(400, 200)
     ArmMotor.stop()
 
 def sweep(sensor, direction, speed=50):
