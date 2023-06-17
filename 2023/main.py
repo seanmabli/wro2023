@@ -21,20 +21,21 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 def main():
-  """ 
   straight(115)
   _thread.start_new_thread(markingblockscanthread, ())
   sweep(sensor=LeftColor, direction="left")
   lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
   lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
-  straight(140)
-  straight(-140)
+  straight(150)
+  straight(-150)
   durn(turn=-110, type="tank")
-  durn(turn=115, circleradius=-50, type="circle", speed=300)
-  durn(turn=-160, type="tank")
-  straight(-130)
-  boatGrab(oc="close")
-  """
+  straight(395)
+  durn(turn=-200, type="tank")
+  straight(-400)
+  boatGrab(movement="close")
+  # durn(turn=115, circleradius=-50, type="circle", speed=300)
+  # durn(turn=-160, type="tank")
+  # straight(-130)
   """
   straight(180)
   durn(turn=170, type="tank")
@@ -43,7 +44,6 @@ def main():
   straight(70)
   durn(turn=-160, type="tank")
   """
-  armGrab(ud="up")
 
 def markingblockscanthread():
   while True:
@@ -59,8 +59,10 @@ def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
   else:
     return 0
 
-def straight(distance):
-  robot.straight(distance)
+def straight(distance, speed=400):
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
+    robot.drive(speed, 0)
   robot.stop()
 
 def square(threshold, speed):
@@ -240,16 +242,15 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', startncap=[], 
 
   robot.stop()
 
-def boatGrab(oc='open', percentage=1, pinch=True):
-  if oc == 'open':
+def boatGrab(movement="open", percentage=1):
+  if movement == "open":
+    BoatMotor.run_angle(-400, 95 * percentage)
+    time.sleep(0.01)
+  elif movement == "close":
+    BoatMotor.run(400)
+    time.sleep(0.3 * percentage)
     BoatMotor.stop()
-    time.sleep(0.1)
-    BoatMotor.run_angle(400, -100 * percentage)
-  elif oc == 'close':
-    BoatMotor.run(300)
-    time.sleep(0.5 * percentage)
-    if not pinch:
-      BoatMotor.stop()
+    time.sleep(0.01)
 
 def armGrab(ud='up'):
   if ud == 'down':
