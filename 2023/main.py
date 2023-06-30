@@ -21,33 +21,29 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 def main():
-  straight(115)
-  _thread.start_new_thread(markingblockscanthread, ())
-  sweep(sensor=LeftColor, direction="left")
-  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
-  lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
-  straight(150)
-  straight(-150)
-  durn(turn=-110, type="tank")
-  straight(395)
-  durn(turn=-200, type="tank")
-  straight(-400)
-  boatGrab(movement="close")
-  # durn(turn=115, circleradius=-50, type="circle", speed=300)
-  # durn(turn=-160, type="tank")
-  # straight(-130)
-  """
-  straight(180)
-  durn(turn=170, type="tank")
-  straight(-90)
-  boatGrab(oc="open")
-  straight(70)
-  durn(turn=-160, type="tank")
-  """
+  # straight(115)
+  # sweep(sensor=LeftColor, direction="left")
+  # _thread.start_new_thread(markingblockscanthread, ())
+  # lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
+  # lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
+  # straightuntilstop(150)
+  # straightuntilstop(-150)
+  # durn(turn=-110, type="tank")
+  # straight(395)
+  # durn(turn=-225, type="tank")
+  _thread.start_new_thread(recordrli, (400, ))
+  straight(-400, speed=200)
 
 def markingblockscanthread():
   while True:
-    print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
+    # print(robot.state())
+    # print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
+    pass
+
+def recordrli(distance):
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
+    print(RightColor.reflection(), LeftColor.reflection())
 
 def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
   if sum(rgb) < 4:
@@ -60,6 +56,16 @@ def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
     return 0
 
 def straight(distance, speed=400):
+  if distance < 0:
+    speed *= -1
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
+    robot.drive(speed, 0)
+  robot.stop()
+
+def straightuntilstop(distance, speed=400):
+  if distance < 0:
+    speed *= -1
   startdistance = robot.distance()
   while abs(robot.distance() - startdistance) < abs(distance):
     robot.drive(speed, 0)
@@ -167,13 +173,11 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
   num = 0
   white = 0
   while count < blacks:
-    print((LeftColor.reflection() + RightColor.reflection()) / 2)
     if (LeftColor.reflection() + RightColor.reflection()) / 2 > whitethreshold:
       white += 1
     if (LeftColor.reflection() + RightColor.reflection()) / 2 < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()) and white > 0:
       count += 1
       lastdistance = abs(robot.distance())
-      print((LeftColor.reflection() + RightColor.reflection()) / 2)
 
     if abs(lastdistancechange - robot.distance()) > estdistance / len(speed) and num < len(speed) - 1:
       lastdistancechange = robot.distance()
@@ -323,10 +327,6 @@ def sTurn(rl, fb, turn, type='pivot', drive=0, turnSpeed=100): # rl = right-left
   if drive != 0:
     straight(drive)
   durn(conificient * (startangle - robot.angle()), type=type, fb=fb, speed=turnSpeed)
-
-def straight(distance):
-  robot.straight(distance)
-  robot.stop()
 
 starttime = time.time()
 main()
