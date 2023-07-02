@@ -2,7 +2,6 @@
 
 from math import factorial
 import numpy as np
-from scipy.signal import argrelextrema, argrelmax, argrelmin
 
 def fixdata(data, window_size=21, order=5):
   # prep data
@@ -21,7 +20,6 @@ def fixdata(data, window_size=21, order=5):
     lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
     y = np.concatenate((firstvals, y, lastvals))
     a = np.convolve(m[::-1], y, mode='valid')
-    print(a)
 
     for j in range(len(a) - 1):
       if a[j + 1] - a[j] > 3:
@@ -49,10 +47,7 @@ def fixdata(data, window_size=21, order=5):
 
     fixeddata = out[i] / np.max(out[i])
     try:
-      w = localMaxMin(9, out[i])
-      print(argrelextrema(fixeddata, np.greater)[0], argrelmax(fixeddata)[0], localMax(fixeddata))
-      print(argrelextrema(fixeddata, np.less)[0], argrelmin(fixeddata)[0], localMin(fixeddata))
-      maxandmin.append([argrelextrema(fixeddata, np.greater)[0][0], argrelextrema(fixeddata, np.greater)[0][1], argrelextrema(fixeddata, np.less)[0][0]])
+      maxandmin.append([localMax(fixeddata)[0], localMax(fixeddata)[1], localMin(fixeddata)[0]])
     except:
       return None
 
@@ -70,13 +65,13 @@ def localMax(data):
   results = np.ones(data.shape, dtype=bool)
   main = data.take(locs, axis=axis, mode=mode)
   for shift in range(1, order + 1):
-      plus = data.take(locs + shift, axis=axis, mode=mode)
-      minus = data.take(locs - shift, axis=axis, mode=mode)
-      results &= main > plus
-      results &= main > minus
-      if ~results.any():
-          return results
-  return results
+    plus = data.take(locs + shift, axis=axis, mode=mode)
+    minus = data.take(locs - shift, axis=axis, mode=mode)
+    results &= main > plus
+    results &= main > minus
+    if ~results.any():
+      return results
+  return np.nonzero(results)[0]
 
 def localMin(data):
   axis=0
@@ -89,13 +84,13 @@ def localMin(data):
   results = np.ones(data.shape, dtype=bool)
   main = data.take(locs, axis=axis, mode=mode)
   for shift in range(1, order + 1):
-      plus = data.take(locs + shift, axis=axis, mode=mode)
-      minus = data.take(locs - shift, axis=axis, mode=mode)
-      results &= main < plus
-      results &= main < minus
-      if ~results.any():
-          return results
-  return results
+    plus = data.take(locs + shift, axis=axis, mode=mode)
+    minus = data.take(locs - shift, axis=axis, mode=mode)
+    results &= main < plus
+    results &= main < minus
+    if ~results.any():
+      return results
+  return np.nonzero(results)[0]
 
 def getdriveoverangle(data):
   a = fixdata(data)

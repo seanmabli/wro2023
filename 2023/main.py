@@ -20,6 +20,7 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 def main():
+  # # ** START **
   # straight(115)
   # sweep(sensor=LeftColor, direction="left")
   # _thread.start_new_thread(markingblockscanthread, ())
@@ -30,7 +31,10 @@ def main():
   # durn(turn=-110, type="tank")
   # straight(395)
   # durn(turn=-225, type="tank")
-  straightwithadjust(scandistance=200, movedistance=200, scanspeed=150, movespeed=400, changefactor=2)
+  # straightwithadjust(scandistance=200, movedistance=200, scanspeed=150, movespeed=400, changefactor=2)
+
+  # ** CONTAINER PICKUP **
+
 
 def markingblockscanthread():
   while True:
@@ -61,14 +65,7 @@ def straight(distance, speed=400):
     robot.drive(speed, 0)
   robot.stop()
 
-def straightuntilstop(distance, speed=400):
-  if distance < 0:
-    speed *= -1
-  startdistance = robot.distance()
-  while abs(robot.distance() - startdistance) < abs(distance):
-    robot.drive(speed, 0)
-  robot.stop()
-
+'''
 def straightwithadjust(scandistance, movedistance, scanspeed=150, movespeed=400, changefactor):
   if movedistance < 100:
     raise Exception('movedistance must be greater than 100')
@@ -90,6 +87,7 @@ def straightwithadjust(scandistance, movedistance, scanspeed=150, movespeed=400,
   while abs(robot.distance() - startdistance) < abs(movedistance) - 100:
     robot.drive(movespeed, 0)
   robot.stop()
+'''
 
 def square(threshold, speed):
   leftBlack = False
@@ -407,6 +405,52 @@ def getdriveoverangle(data):
     b += 2
   return a
 '''
+
+def localMaxList(data):
+  order=1
+
+  locs = list(range(0, len(data), step))
+
+  results = [True] * len(data)
+  main = take(data, locs)
+  for shift in range(1, order + 1):
+    plus = take(data, [i + shift for i in locs])
+    minus = take(data, [i - shift for i in locs])
+    results = andequal(results, [main[i] > plus[i] for i in range(len(main))])
+    results = andequal(results, [main[i] > minus[i] for i in range(len(main))])
+  return [i for i, val in enumerate(results) if val]
+
+def localMinList(data):
+  order=1
+
+  locs = list(range(0, len(data), step))
+
+  results = [True] * len(data)
+  main = take(data, locs)
+  for shift in range(1, order + 1):
+    plus = take(data, [i + shift for i in locs])
+    minus = take(data, [i - shift for i in locs])
+    results = andequal(results, [main[i] < plus[i] for i in range(len(main))])
+    results = andequal(results, [main[i] < minus[i] for i in range(len(main))])
+  return [i for i, val in enumerate(results) if val]
+
+def take(array, indices):
+  out = []
+  for i in indices:
+    if i < len(array):
+      out.append(array[i])
+    else:
+      out.append(array[len(array) - 1])
+  return out
+
+def andequal(list1, list2):
+  out = []
+  for i in range(len(list1)):
+    if list1[i] == list2[i]:
+      out.append(list1[i])
+    else:
+      out.append(False)
+  return out
 
 starttime = time.time()
 main()
