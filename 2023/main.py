@@ -4,11 +4,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, ColorSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button, Direction
 from pybricks.robotics import DriveBase
-import time
-import _thread
-import math
-import numpy as np
-from signal import argrelextrema
+import time, _thread, math
 
 ArmMotor = Motor(Port.A)
 RightMotor = Motor(Port.B)
@@ -352,6 +348,7 @@ def sTurn(rl, fb, turn, type='pivot', drive=0, turnSpeed=100): # rl = right-left
     straight(drive)
   durn(conificient * (startangle - robot.angle()), type=type, fb=fb, speed=turnSpeed)
 
+'''
 def fixdata(data, window_size=21, order=5):
   # prep data
   out = []
@@ -409,6 +406,7 @@ def getdriveoverangle(data):
     a = fixdata(data, 21, b)
     b += 2
   return a
+'''
 
 starttime = time.time()
 main()
