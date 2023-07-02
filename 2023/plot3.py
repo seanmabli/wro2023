@@ -2,6 +2,7 @@
 
 from math import factorial
 import numpy as np
+import matplotlib.pyplot as plt
 
 def fixdata(data, window_size=21, order=5):
   # prep data
@@ -22,7 +23,7 @@ def fixdata(data, window_size=21, order=5):
     a = np.convolve(m[::-1], y, mode='valid')
 
     for j in range(len(a) - 1):
-      if a[j + 1] - a[j] > 3:
+      if a[j + 1] - a[j] > 4:
         f = [a[j]] * len(a[:j])
         g = a[j:]
         f.extend(g)
@@ -30,7 +31,7 @@ def fixdata(data, window_size=21, order=5):
         break
 
     for j in reversed(range(len(a) - 1)):
-      if a[j] - a[j + 1] > 3:
+      if a[j] - a[j + 1] > 4:
         f = a[:j + 1]
         g = [a[j + 1]] * len(a[j + 1:])
         f.extend(g)
@@ -39,17 +40,22 @@ def fixdata(data, window_size=21, order=5):
 
     out.append(a)
 
-
-  # plot data
   maxandmin = []
   for i in range(len(out)):
     x = np.arange(0, len(out[i]), 1)
 
     fixeddata = out[i] / np.max(out[i])
-    try:
-      maxandmin.append([localMax(fixeddata)[0], localMax(fixeddata)[1], localMin(fixeddata)[0]])
-    except:
+    localMaxOut = localMax(fixeddata)
+    localMinOut = localMin(fixeddata)
+
+    plt.plot(x, fixeddata)
+    plt.plot(localMaxOut, fixeddata[localMaxOut], 'ro')
+    plt.plot(localMinOut, fixeddata[localMinOut], 'bo')
+    plt.show()
+
+    if len(localMaxOut) != 2 or len(localMinOut) != 1:
       return None
+    maxandmin.append([localMax(fixeddata)[0], localMax(fixeddata)[1], localMin(fixeddata)[0]])
 
   # get differnce
   return sum([a_i - b_i for a_i, b_i in zip(maxandmin[0], maxandmin[1])]) / len(maxandmin[0])
@@ -98,6 +104,7 @@ def getdriveoverangle(data):
   while a == None:
     a = fixdata(data, 21, b)
     b += 2
+    print("try2")
   return a
 
 # read data from file

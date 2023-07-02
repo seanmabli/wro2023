@@ -25,6 +25,7 @@ out = []
 start = []
 end = []
 for i in range(len(data[0, :])):
+  print(data[:,i])
   a = savitzky_golay(data[:,i], 21, 7)
   # a = data[:,i].copy()
 
@@ -40,7 +41,6 @@ for i in range(len(data[0, :])):
 
   out.append(a)
 
-'''
 for i in range(len(out)):
   a = [out[i][start[i]]] * len(out[i][:start[i]])
   b = out[i][start[i]:end[i]]
@@ -48,8 +48,7 @@ for i in range(len(out)):
   a.extend(b)
   a.extend(c)
   out[i] = np.array(a)
-'''
-
+  
 # plot data
 # maxandmin = []
 for i in range(len(out)):

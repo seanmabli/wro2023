@@ -19,6 +19,8 @@ RightColor = ColorSensor(Port.S3)
 robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
+markingblocks = [0, 0] # 0 = blue, 1 = green, 2 = None
+
 def main():
   # # ** START **
   # straight(115)
@@ -32,15 +34,20 @@ def main():
   # straight(395)
   # durn(turn=-225, type="tank")
   # straightwithadjust(scandistance=200, movedistance=200, scanspeed=150, movespeed=400, changefactor=2)
+  _thread.start_new_thread(recordrli, (400, ))
+  straight(400)
 
   # ** CONTAINER PICKUP **
+  # armGrab(ud="down")
+  # time.sleep(2)
+  # armGrab(ud="uptomid")
+  # markingblockscanthread()
+  
 
 
 def markingblockscanthread():
   while True:
-    # print(robot.state())
-    # print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
-    pass
+    print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
 
 def recordrli(distance):
   startdistance = robot.distance()
@@ -277,12 +284,19 @@ def boatGrab(movement="open", percentage=1):
 def armGrab(ud='up'):
   if ud == 'down':
     time.sleep(0.001)
-    ArmMotor.run_angle(400, -200)
-  elif ud == 'up':
+    ArmMotor.run_angle(300, 200)
+  elif ud == 'uptomid':
     ArmMotor.run(-400)
     time.sleep(0.6)
-    ArmMotor.run_angle(400, 200)
+    ArmMotor.run_angle(400, 50)
     ArmMotor.stop()
+  elif ud == "full":
+    ArmMotor.run_angle(250, 200)
+    ArmMotor.run(-400)
+    time.sleep(0.6)
+    ArmMotor.run_angle(200, 200)
+    ArmMotor.stop()
+
 
 def sweep(sensor, direction, speed=50):
   if sensor not in [RightColor, LeftColor]:

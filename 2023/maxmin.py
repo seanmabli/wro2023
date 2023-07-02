@@ -3,7 +3,7 @@ import math
 def localMaxList(data):
   order=1
 
-  locs = list(range(0, len(data), step))
+  locs = list(range(0, len(data)))
 
   results = [True] * len(data)
   main = take(data, locs)
@@ -17,7 +17,7 @@ def localMaxList(data):
 def localMinList(data):
   order=1
 
-  locs = list(range(0, len(data), step))
+  locs = list(range(0, len(data)))
 
   results = [True] * len(data)
   main = take(data, locs)
