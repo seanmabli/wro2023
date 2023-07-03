@@ -23,18 +23,24 @@ markingblocks = [0, 0] # 0 = blue, 1 = green, 2 = None
 # SavitzkyGolayFilterData = json.load(open("data.json", "r"))
 
 def main():
-  # # ** START **
-  # straight(115)
-  # sweep(sensor=LeftColor, direction="left")
-  # _thread.start_new_thread(markingblockscanthread, ())
-  # lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
-  # lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
-  # straightuntilstop(150)
-  # straightuntilstop(-150)
-  # durn(turn=-110, type="tank")
-  # straight(395)
-  # durn(turn=-225, type="tank")
-  straightwithadjust(scandistance=200, movedistance=200, changefactor=2, scanspeed=150, movespeed=400)
+  # ** START **
+  straight(115)
+  sweep(sensor=LeftColor, direction="left")
+  _thread.start_new_thread(markingblockscanthread, ())
+  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
+  lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
+  straight(150)
+  straight(-150)
+  durn(turn=-110, type="tank")
+  durn(turn=115, circleradius=-50, type="circle", speed=300)
+  durn(turn=-160, type="tank")
+  straight(-200, speed=250)
+  boatGrab(movement="close")
+  straight(400)
+  # straightwithadjust(scandistance=200, movedistance=200, changefactor=2, scanspeed=150, movespeed=400)
+
+  # ** MOVE BOAT TO CONTAINER PICKUP **
+  
 
   # ** CONTAINER PICKUP **
   # armGrab(ud="down")
@@ -277,13 +283,12 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', startncap=[], 
 
 def boatGrab(movement="open", percentage=1):
   if movement == "open":
+    BoatMotor.stop()
     BoatMotor.run_angle(-400, 95 * percentage)
     time.sleep(0.01)
   elif movement == "close":
     BoatMotor.run(400)
     time.sleep(0.3 * percentage)
-    BoatMotor.stop()
-    time.sleep(0.01)
 
 def armGrab(ud='up'):
   if ud == 'down':
