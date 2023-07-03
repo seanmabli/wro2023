@@ -4,7 +4,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, ColorSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button, Direction
 from pybricks.robotics import DriveBase
-import time, _thread, math
+import time, _thread, math, json
 
 ArmMotor = Motor(Port.A)
 RightMotor = Motor(Port.B)
@@ -20,6 +20,7 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 markingblocks = [0, 0] # 0 = blue, 1 = green, 2 = None
+# SavitzkyGolayFilterData = json.load(open("data.json", "r"))
 
 def main():
   # # ** START **
@@ -33,9 +34,7 @@ def main():
   # durn(turn=-110, type="tank")
   # straight(395)
   # durn(turn=-225, type="tank")
-  # straightwithadjust(scandistance=200, movedistance=200, scanspeed=150, movespeed=400, changefactor=2)
-  _thread.start_new_thread(recordrli, (400, ))
-  straight(400)
+  straightwithadjust(scandistance=200, movedistance=200, changefactor=2, scanspeed=150, movespeed=400)
 
   # ** CONTAINER PICKUP **
   # armGrab(ud="down")
@@ -49,7 +48,7 @@ def markingblockscanthread():
   while True:
     print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
 
-def recordrli(distance):
+def recordrli(distance):                                                         
   startdistance = robot.distance()
   while abs(robot.distance() - startdistance) < abs(distance):
     print(RightColor.reflection(), LeftColor.reflection())
@@ -72,8 +71,7 @@ def straight(distance, speed=400):
     robot.drive(speed, 0)
   robot.stop()
 
-'''
-def straightwithadjust(scandistance, movedistance, scanspeed=150, movespeed=400, changefactor):
+def straightwithadjust(scandistance, movedistance, changefactor, scanspeed=150, movespeed=400):
   if movedistance < 100:
     raise Exception('movedistance must be greater than 100')
   if scandistance < 0:
@@ -86,7 +84,14 @@ def straightwithadjust(scandistance, movedistance, scanspeed=150, movespeed=400,
     robot.drive(scanspeed, 0)
     out.append([RightColor.reflection(), LeftColor.reflection()])
   robot.stop()
-  shift = getdriveoverangle(np.array(out))
+  newout = [[out[0][0]], [out[0][1]]]
+  for i in range(1, len(out)):
+    newout[0].append(out[i][0])
+    newout[1].append(out[i][1])
+  print(newout)
+  shift = getdriveoverangle(newout)
+  print(shift)
+  quit()
   startdistance = robot.distance()
   while abs(robot.distance() - startdistance) < 100:
     robot.drive(movespeed, shift * changefactor)
@@ -94,7 +99,6 @@ def straightwithadjust(scandistance, movedistance, scanspeed=150, movespeed=400,
   while abs(robot.distance() - startdistance) < abs(movedistance) - 100:
     robot.drive(movespeed, 0)
   robot.stop()
-'''
 
 def square(threshold, speed):
   leftBlack = False
@@ -360,70 +364,53 @@ def sTurn(rl, fb, turn, type='pivot', drive=0, turnSpeed=100): # rl = right-left
     straight(drive)
   durn(conificient * (startangle - robot.angle()), type=type, fb=fb, speed=turnSpeed)
 
-'''
 def fixdata(data, window_size=21, order=5):
-  # prep data
+  a = SavitzkyGolayFilter(data, window_size=window_size, order=order)
+
+  for j in range(len(a) - 1):
+    if a[j + 1] - a[j] > 4: 	
+      f = [a[j]] * len(a[:j])
+      g = a[j:]
+      f.extend(g)
+      a = f.copy()
+      break
+
+  for j in reversed(range(len(a) - 1)):
+    if a[j] - a[j + 1] > 4:
+      f = a[:j + 1]
+      g = [a[j + 1]] * len(a[j + 1:])
+      f.extend(g)
+      a = f.copy()
+      break
+
+  fixeddata = []
+  for j in range(len(a)):
+    fixeddata.append(a[j] / max(a))
+  localMaxOut = localMaxList(fixeddata)
+  localMinOut = localMinList(fixeddata)
+
+  if len(localMaxOut) != 2 or len(localMinOut) != 1:
+    return None
+  return [localMaxOut[0], localMaxOut[1], localMinOut[0]]
+
+def SavitzkyGolayFilter(data, window_size=21, order=5):
+  half_window = (window_size - 1) // 2
+  firstvals = [-abs(i - data[0]) + data[0] for i in data[1:half_window+1][::-1]]
+  lastvals = [abs(i - data[-1]) + data[-1] for i in data[-half_window-1:-1][::-1]]
+  data = firstvals + data + lastvals
+
+  return convolve(data, SavitzkyGolayFilterData[str(window_size) + "," + str(order)])
+  
+def convolve(data, f):
   out = []
-  start = []
-  end = []
-  for i in range(len(data[0, :])):
-    deriv=0
-    rate=1
-    y = data[:,i].copy()
-    order_range = range(order + 1)
-    half_window = (window_size - 1) // 2
-    b = np.mat([[k**i for i in order_range] for k in range(-half_window, half_window+1)])
-    m = np.linalg.pinv(b).A[deriv] * rate**deriv * math.factorial(deriv)
-    firstvals = y[0] - np.abs(y[1:half_window+1][::-1] - y[0])
-    lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
-    y = np.concatenate((firstvals, y, lastvals))
-    a = np.convolve(m[::-1], y, mode='valid')
-
-    for j in range(len(a) - 1):
-      if a[j + 1] - a[j] > 3:
-        f = [a[j]] * len(a[:j])
-        g = a[j:]
-        f.extend(g)
-        a = f.copy()
-        break
-
-    for j in reversed(range(len(a) - 1)):
-      if a[j] - a[j + 1] > 3:
-        f = a[:j + 1]
-        g = [a[j + 1]] * len(a[j + 1:])
-        f.extend(g)
-        a = f.copy()
-        break
-
-    out.append(a)
-
-  # plot data
-  maxandmin = []
-  for i in range(len(out)):
-    x = np.arange(0, len(out[i]), 1)
-
-    fixeddata = out[i] / np.max(out[i])
-    try:
-      maxandmin.append([argrelextrema(fixeddata, np.greater)[0][0], argrelextrema(fixeddata, np.greater)[0][1], argrelextrema(fixeddata, np.less)[0][0]])
-    except:
-      return None
-
-  # get differnce
-  return sum([a_i - b_i for a_i, b_i in zip(maxandmin[0], maxandmin[1])]) / len(maxandmin[0])
-
-def getdriveoverangle(data):
-  a = fixdata(data)
-  b = 7
-  while a == None:
-    a = fixdata(data, 21, b)
-    b += 2
-  return a
-'''
+  for i in range(len(data) - len(f) + 1):
+    out.append(sum([data[i + j] * f[j] for j in range(len(f))]))
+  return out
 
 def localMaxList(data):
   order=1
 
-  locs = list(range(0, len(data), step))
+  locs = list(range(0, len(data)))                                                                                                                                                                                                                                                                                                                                                                           
 
   results = [True] * len(data)
   main = take(data, locs)
@@ -437,7 +424,7 @@ def localMaxList(data):
 def localMinList(data):
   order=1
 
-  locs = list(range(0, len(data), step))
+  locs = list(range(0, len(data)))
 
   results = [True] * len(data)
   main = take(data, locs)
@@ -465,6 +452,25 @@ def andequal(list1, list2):
     else:
       out.append(False)
   return out
+
+def getdriveoverangle(data):
+  allminmax = []
+  for i in range(len(data)):
+    breakOn = False
+    for j in range(7, 15, 2):
+      if breakOn:
+        break
+      for k in range(21, 31, 2):
+        if breakOn:
+          break
+        print(i, j, k)
+        a = fixdata(data[i], k, j)
+        if a != None:
+          breakOn = True
+          allminmax.append(a)
+          break
+  out = [allminmax[0][i] - allminmax[1][i] for i in range(len(allminmax[0]))]
+  return sum(out) / len(out)
 
 starttime = time.time()
 main()
