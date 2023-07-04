@@ -19,7 +19,8 @@ RightColor = ColorSensor(Port.S3)
 robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
-markingblocks = [0, 0] # 0 = blue, 1 = green, 2 = None
+markingblocks = [3, 3] # 0 = blue, 1 = green, 2 = none, 3 = not scaned
+containers = [3, 3, 3, 3] # 0 = blue, 1 = green, 2 = none, 3 = not scaned
 # SavitzkyGolayFilterData = json.load(open("data.json", "r"))
 
 def main():
@@ -27,22 +28,39 @@ def main():
   straight(115)
   sweep(sensor=LeftColor, direction="left")
   _thread.start_new_thread(markingblockscanthread, ())
-  lfpidBlack(sensor=LeftColor, sideofsensor='in', startdistance=100, blackthreshold=10, whitethreshold=25, startncap=350, kp=0.4)
-  lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='in')
-  straight(150)
+  lfpidBlack(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=10, whitethreshold=25, speed=350, kp=0.4)
+  lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='out')
+  straight(150, speed=300)
   straight(-150)
   durn(turn=-110, type="tank")
-  durn(turn=115, circleradius=-50, type="circle", speed=300)
+  durn(turn=120, circleradius=-50, type="circle", speed=300)
   durn(turn=-160, type="tank")
   straight(-200, speed=250)
   boatGrab(movement="close")
-  straight(400)
-  # straightwithadjust(scandistance=200, movedistance=200, changefactor=2, scanspeed=150, movespeed=400)
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
-  
+  straight(200)
+  durn(turn=-160, type="tank", speed=150)
+  straight(300)
+  durn(turn=100, type="tank", speed=150)
+  sweep(sensor=RightColor, direction="left", whiteFirst=True)
+  lfpidBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150, kp=0.4)
+  lfpidDistance(distance=105, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
+  durn(turn=160, type="tank", speed=150)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
+  lfpidDistance(distance=180, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
+  boatGrab(movement="open")
 
   # ** CONTAINER PICKUP **
+  durn(turn=-160, type="pivot", speed=300)
+  straight(-200, speed=300)
+  durn(turn=30, type="pivot", speed=300)
+  containers[3] = rgbtocolor(ColorA.rgb())
+  durn(turn=-30, type="pivot", speed=300)
+
+
+
+
   # armGrab(ud="down")
   # time.sleep(2)
   # armGrab(ud="uptomid")
@@ -175,7 +193,7 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = 
 
 
 
-def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, startdistance=0, kp=0.25, ki=0, kd=0.5, startncap=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
+def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, startdistance=0, kp=0.25, ki=0, kd=0.5, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
@@ -185,15 +203,15 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
   if not isinstance(whitethreshold, int) and isinstance(whitethreshold, float) and whitethreshold != None:
     raise Exception('whitethreshold must be an integer')
 
-  if sensor == LeftColor:
+  if sensor == RightColor:
     sideofsensor = 'in' if sideofsensor == 'out' else 'out'
 
-  if startncap == []:
+  if speed == []:
     speed = [160]
-  elif type(startncap) == int:
-    speed = [startncap]
+  elif type(speed) == int:
+    speed = [speed]
   else:
-    speed = list(range(startncap[0], startncap[1], 1 if startncap[0] < startncap[1] else -1))
+    speed = list(range(speed[0], speed[1], 1 if speed[0] < speed[1] else -1))
   
   target = (8 + 76) / 2 # Black  = 8, White = 76
   error = 0
@@ -231,23 +249,23 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
 
   robot.stop()
 
-def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', startncap=[], kp=0.25, ki=0, kd=0.5):
+def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0.25, ki=0, kd=0.5):
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
     raise Exception('sideofsensor must be "in" or "out"')
   
-  if sensor == LeftColor:
+  if sensor == RightColor:
     sideofsensor = 'in' if sideofsensor == 'out' else 'out'
 
-  if startncap == []:
-    speed = [160]
+  if speed == []:
+    speed = [150]
     one = True
-  elif type(startncap) == int:
-    speed = [startncap]
+  elif type(speed) == int:
+    speed = [speed]
     one = True
   else:
-    speed = list(range(startncap[0], startncap[1]))
+    speed = list(range(speed[0], speed[1]))
     one = False
 
   target = (8 + 76) / 2 # Black  = 8, White = 76
@@ -307,7 +325,7 @@ def armGrab(ud='up'):
     ArmMotor.stop()
 
 
-def sweep(sensor, direction, speed=50):
+def sweep(sensor, direction, speed=100, whiteFirst=False):
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if direction not in ['right', 'left']:
@@ -322,6 +340,10 @@ def sweep(sensor, direction, speed=50):
   else:
     robot.drive(0, -speed)
   
+  if whiteFirst:
+    while sensor.reflection() < 60:
+      info.append([sensor.reflection(), robot.angle()])
+
   while sensor.reflection() > 15:
     info.append([sensor.reflection(), robot.angle()])
 
@@ -479,4 +501,5 @@ def getdriveoverangle(data):
 
 starttime = time.time()
 main()
+robot.stop()
 print(time.time() - starttime)
