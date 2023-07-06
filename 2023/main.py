@@ -33,30 +33,40 @@ def main():
   straight(150, speed=300)
   straight(-150)
   durn(turn=-110, type="tank")
-  durn(turn=120, circleradius=-50, type="circle", speed=300)
+  durn(turn=115, circleradius=-50, type="circle", speed=300)
   durn(turn=-160, type="tank")
-  straight(-200, speed=250)
+  straight(-190, speed=250)
   boatGrab(movement="close")
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
-  straight(200)
-  durn(turn=-160, type="tank", speed=150)
-  straight(300)
-  durn(turn=100, type="tank", speed=150)
+  straight(50)
+  durn(turn=-140, type="tank", speed=150)
+  straight(275)
+  durn(turn=80, type="tank", speed=150)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
   lfpidBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150, kp=0.4)
   lfpidDistance(distance=105, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
-  durn(turn=160, type="tank", speed=150)
+  durn(turn=120, type="tank", speed=150)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=180, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
+  lfpidDistance(distance=210, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
   boatGrab(movement="open")
+  straight(-15)
 
   # ** CONTAINER PICKUP **
   durn(turn=-160, type="pivot", speed=300)
-  straight(-200, speed=300)
+  straight(-115, speed=300)
   durn(turn=30, type="pivot", speed=300)
-  containers[3] = rgbtocolor(ColorA.rgb())
-  durn(turn=-30, type="pivot", speed=300)
+  containers[3] = colorScan(acceptable=[0, 1], direction="out")
+  durn(turn=30, type="pivot", fb="backward", speed=300)
+  straight(-85, speed=300)
+  durn(turn=30, type="pivot", speed=300)
+  containers[2] = colorScan(acceptable=[0, 1], direction="out")
+  durn(turn=30, type="pivot", fb="backward", speed=300)
+  straight(-85, speed=300)
+  durn(turn=30, type="pivot", speed=300)
+  containers[1] = colorScan(acceptable=[0, 1], direction="out")
+  durn(turn=30, type="pivot", fb="backward", speed=300)
+  print(containers)
 
 
 
@@ -498,6 +508,35 @@ def getdriveoverangle(data):
           break
   out = [allminmax[0][i] - allminmax[1][i] for i in range(len(allminmax[0]))]
   return sum(out) / len(out)
+
+def colorScan(acceptable, direction):
+  if rgbtocolor(ColorA.rgb()) in acceptable:
+    return rgbtocolor(ColorA.rgb())
+  else:
+    startangle = robot.angle()
+
+    if direction == 'in':
+      RightMotor.run(-150)
+    elif direction == 'out':
+      RightMotor.run(150)
+
+    color = None
+    while color not in acceptable and abs(startangle - robot.angle()) < 40:
+      color = rgbtocolor(ColorA.rgb())
+
+    robot.stop()
+
+    if direction == 'in':
+      RightMotor.run(75)
+      while robot.angle() > startangle:
+        pass
+    elif direction == 'out':
+      RightMotor.run(-75)
+      while robot.angle() < startangle:
+        pass
+
+    robot.stop()
+    return color
 
 starttime = time.time()
 main()
