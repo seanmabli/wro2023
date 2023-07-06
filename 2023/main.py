@@ -24,16 +24,17 @@ containers = [3, 3, 3, 3] # 0 = blue, 1 = green, 2 = none, 3 = not scaned
 # SavitzkyGolayFilterData = json.load(open("data.json", "r"))
 
 def main():
+  '''
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
-  _thread.start_new_thread(markingblockscanthread, ())
+  _thread.start_new_thread(markingblockscanthread, (300,))
   lfpidBlack(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=10, whitethreshold=25, speed=350, kp=0.4)
   lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='out')
   straight(150, speed=300)
   straight(-150)
   durn(turn=-110, type="tank")
-  durn(turn=115, circleradius=-50, type="circle", speed=300)
+  durn(turn=112, circleradius=-50, type="circle", speed=300)
   durn(turn=-160, type="tank")
   straight(-190, speed=250)
   boatGrab(movement="close")
@@ -41,46 +42,47 @@ def main():
   # ** MOVE BOAT TO CONTAINER PICKUP **
   straight(50)
   durn(turn=-140, type="tank", speed=150)
-  straight(275)
+  straight(260)
   durn(turn=80, type="tank", speed=150)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
   lfpidBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150, kp=0.4)
-  lfpidDistance(distance=105, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
+  lfpidDistance(distance=110, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
   durn(turn=120, type="tank", speed=150)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=210, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
+  lfpidDistance(distance=185, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
   boatGrab(movement="open")
-  straight(-15)
 
-  # ** CONTAINER PICKUP **
+  # ** CONTAINER SCAN **
   durn(turn=-160, type="pivot", speed=300)
-  straight(-115, speed=300)
-  durn(turn=30, type="pivot", speed=300)
-  containers[3] = colorScan(acceptable=[0, 1], direction="out")
-  durn(turn=30, type="pivot", fb="backward", speed=300)
-  straight(-85, speed=300)
-  durn(turn=30, type="pivot", speed=300)
-  containers[2] = colorScan(acceptable=[0, 1], direction="out")
-  durn(turn=30, type="pivot", fb="backward", speed=300)
-  straight(-85, speed=300)
-  durn(turn=30, type="pivot", speed=300)
-  containers[1] = colorScan(acceptable=[0, 1], direction="out")
-  durn(turn=30, type="pivot", fb="backward", speed=300)
+  straight(-120, speed=300)
+  containers[3] = colorScan(acceptable=[1, 2], direction="out", speed=300)
+  straight(-100, speed=300)
+  containers[2] = colorScan(acceptable=[1, 2], direction="out", speed=300)
+  straight(-100, speed=300)
+  containers[1] = colorScan(acceptable=[1, 2], direction="out", speed=300)
+  if None in containers:
+    straight(-100, speed=300)
+    containers[0] = colorScan(acceptable=[1, 2], direction="out", speed=300)
   print(containers)
-
-
-
-
-  # armGrab(ud="down")
-  # time.sleep(2)
-  # armGrab(ud="uptomid")
-  # markingblockscanthread()
+  '''
   
+  # ** CONTAINER PICKUP **
+
+  # blue
+  # armGrab(ud="down")
+  # armGrab(ud="uptomid", speed=200)
+
+  # green
+  armGrab(ud="down")
+  armGrab(ud="uptomid", speed=300)
 
 
-def markingblockscanthread():
-  while True:
-    print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
+def markingblockscanthread(distance):
+  colorList = []                      
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
+    colorList.append(rgbtocolor(ColorA.rgb()))
+  print(colorList)
 
 def recordrli(distance):                                                         
   startdistance = robot.distance()
@@ -230,7 +232,6 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
   derivative = 0
   count = 0
 
-  robot.reset()
   lastdistance = abs(robot.distance())
   lastdistancechange = 0
   num = 0
@@ -285,8 +286,6 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0
   integral = 0
   derivative = 0
 
-  robot.reset()
-
   lastdistance = 0
   num = 0
   while abs(robot.distance()) < distance:
@@ -299,7 +298,7 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0
       error = sensor.reflection() - target
     integral += error
     derivative = error - lasterror
-    turn = kp * error + ki * integral + kd * derivative
+    turn = kp * error
     lasterror = error
 
     if one:
@@ -318,20 +317,26 @@ def boatGrab(movement="open", percentage=1):
     BoatMotor.run(400)
     time.sleep(0.3 * percentage)
 
-def armGrab(ud='up'):
+def armGrab(ud, speed=None):
   if ud == 'down':
     time.sleep(0.001)
-    ArmMotor.run_angle(300, 200)
+    if speed == None:
+      speed = 300
+    ArmMotor.run_angle(speed, 250)
   elif ud == 'uptomid':
-    ArmMotor.run(-400)
-    time.sleep(0.6)
-    ArmMotor.run_angle(400, 50)
+    if speed == None:
+      speed = 400
+    ArmMotor.run(-speed)
+    time.sleep(0.6 * (400 / speed))
+    ArmMotor.run_angle(speed, 50)
     ArmMotor.stop()
   elif ud == "full":
-    ArmMotor.run_angle(250, 200)
+    if speed == None:
+      speed = 200
+    ArmMotor.run_angle(speed, 200)
     ArmMotor.run(-400)
     time.sleep(0.6)
-    ArmMotor.run_angle(200, 200)
+    ArmMotor.run_angle(speed, 200)
     ArmMotor.stop()
 
 
@@ -509,34 +514,53 @@ def getdriveoverangle(data):
   out = [allminmax[0][i] - allminmax[1][i] for i in range(len(allminmax[0]))]
   return sum(out) / len(out)
 
-def colorScan(acceptable, direction):
+def colorScan(acceptable, direction, speed=200):
   if rgbtocolor(ColorA.rgb()) in acceptable:
     return rgbtocolor(ColorA.rgb())
   else:
     startangle = robot.angle()
 
     if direction == 'in':
-      RightMotor.run(-150)
+      RightMotor.run(-speed)
     elif direction == 'out':
-      RightMotor.run(150)
+      RightMotor.run(speed)
 
     color = None
-    while color not in acceptable and abs(startangle - robot.angle()) < 40:
-      color = rgbtocolor(ColorA.rgb())
+    colorList = []
+    while color not in acceptable and abs(startangle - robot.angle()) < 35:
+      outColor = rgbtocolor(ColorA.rgb())
+      if outColor in acceptable:
+        colorList.append(outColor)
+        if len(colorList) >= 10:
+          color = mode(colorList)
+
+    if color == None and len(colorList) > 0:
+      color = mode(colorList)
 
     robot.stop()
 
     if direction == 'in':
-      RightMotor.run(75)
+      RightMotor.run(speed / 2)
       while robot.angle() > startangle:
         pass
     elif direction == 'out':
-      RightMotor.run(-75)
+      RightMotor.run(-speed / 2)
       while robot.angle() < startangle:
         pass
 
     robot.stop()
     return color
+
+def mode(List):
+  counter = 0
+  num = List[0]
+    
+  for i in List:
+    curr_frequency = List.count(i)
+    if(curr_frequency> counter):
+      counter = curr_frequency
+      num = i
+  return num
 
 starttime = time.time()
 main()
