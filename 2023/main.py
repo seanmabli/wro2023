@@ -19,16 +19,18 @@ RightColor = ColorSensor(Port.S3)
 robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
-markingblocks = [3, 3] # 0 = blue, 1 = green, 2 = none, 3 = not scaned
-containers = [3, 3, 3, 3] # 0 = blue, 1 = green, 2 = none, 3 = not scaned
+markingblocks = [3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
+containers = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
+containerpositions = [-5, -120, -215, -305]
+boatpositions = [-88, -121, -154, -187]
 # SavitzkyGolayFilterData = json.load(open("data.json", "r"))
 
 def main():
-  '''
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
-  _thread.start_new_thread(markingblockscanthread, (300,))
+  a = time.time()
+  _thread.start_new_thread(markingblockscanthread, (1.4,))
   lfpidBlack(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=10, whitethreshold=25, speed=350, kp=0.4)
   lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='out')
   straight(150, speed=300)
@@ -49,31 +51,41 @@ def main():
   lfpidDistance(distance=110, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
   durn(turn=120, type="tank", speed=150)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=185, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
+  lfpidDistance(distance=160, sensor=LeftColor, sideofsensor='out', speed=150, kp=0.4)
   boatGrab(movement="open")
 
   # ** CONTAINER SCAN **
+  position = 0
   durn(turn=-160, type="pivot", speed=300)
-  straight(-120, speed=300)
-  containers[3] = colorScan(acceptable=[1, 2], direction="out", speed=300)
-  straight(-100, speed=300)
-  containers[2] = colorScan(acceptable=[1, 2], direction="out", speed=300)
-  straight(-100, speed=300)
-  containers[1] = colorScan(acceptable=[1, 2], direction="out", speed=300)
-  if None in containers:
-    straight(-100, speed=300)
-    containers[0] = colorScan(acceptable=[1, 2], direction="out", speed=300)
-  print(containers)
-  '''
+  position += straight(-120, speed=300)
+  containers[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  position += straight(-95, speed=300)
+  containers[2] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  if calculateColors(containers)[1] == False:
+    position += straight(-95, speed=300)
+    containers[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+    if calculateColors(containers)[1] == False:
+      position += straight(-95, speed=300)
+      containers[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+      
+  print(calculateColors(containers))
+  time.sleep(3)
+  position += straight(boatpositions[0] - position)
+  time.sleep(3)
+  position += straight(boatpositions[1] - position)
+  time.sleep(3)
+  position += straight(boatpositions[2] - position)
+  time.sleep(3)
+  position += straight(boatpositions[3] - position)
   
   # ** CONTAINER PICKUP **
 
   # blue
-  armGrab("mid->down")
-  armGrab("down->mid", speed=200)
-  time.sleep(3)
-  armGrab("mid->up", speed=300)
-  armGrab("up->mid")
+   #armGrab("mid->down")
+  # armGrab("down->mid", speed=200)
+  # time.sleep(3)
+  # armGrab("mid->up", speed=300)
+  # armGrab("up->mid")
 
   # green
   # armGrab("up->down")
@@ -81,13 +93,34 @@ def main():
   # time.sleep(3)
   # armGrab("mid->up", speed=300)
 
+def calculateColors(colorList):
+  if colorList.count(3) == 2 and (colorList.count(1) == 2 or colorList.count(2) == 2):
+    colorList = list(map(lambda x: (1 if colorList.count(2) == 2 else 2) if x == 3 else x, colorList))
+    return (colorList, True)
+  elif colorList.count(3) == 1:
+    if colorList.count(1) == 2:
+      colorList = list(map(lambda x: 2 if x == 3 else x, colorList))
+    else:
+      colorList = list(map(lambda x: 1 if x == 3 else x, colorList))
+    return (colorList, True)
+  elif colorList.count(3) == 0:
+    return (colorList, True)
+  else:
+    return (colorList, False)
 
-def markingblockscanthread(distance):
+def markingblockscanthread(duration):
   colorList = []                      
-  startdistance = robot.distance()
-  while abs(robot.distance() - startdistance) < abs(distance):
+  newStartTime = time.time()
+  while abs(newStartTime - time.time()) < abs(duration):
     colorList.append(rgbtocolor(ColorA.rgb()))
-  print(colorList)
+  outColors = []
+  if colorList.count(1) / len(colorList) > 0.05:
+    outColors.append(1)
+  if colorList.count(2) / len(colorList) > 0.05:
+    outColors.append(2)
+  if len(outColors) == 1:
+    outColors = [outColors[0], outColors[0]]
+  print(outColors)
 
 def recordrli(distance):                                                         
   startdistance = robot.distance()
@@ -111,7 +144,9 @@ def straight(distance, speed=400):
   while abs(robot.distance() - startdistance) < abs(distance):
     robot.drive(speed, 0)
   robot.stop()
+  return distance
 
+'''
 def straightwithadjust(scandistance, movedistance, changefactor, scanspeed=150, movespeed=400):
   if movedistance < 100:
     raise Exception('movedistance must be greater than 100')
@@ -140,6 +175,7 @@ def straightwithadjust(scandistance, movedistance, changefactor, scanspeed=150, 
   while abs(robot.distance() - startdistance) < abs(movedistance) - 100:
     robot.drive(movespeed, 0)
   robot.stop()
+'''
 
 def square(threshold, speed):
   leftBlack = False
@@ -293,7 +329,8 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0
 
   lastdistance = 0
   num = 0
-  while abs(robot.distance()) < distance:
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
     if abs(lastdistance - robot.distance()) > distance / len(speed):
       lastdistance = robot.distance()
       num += 1
@@ -544,7 +581,7 @@ def getdriveoverangle(data):
   out = [allminmax[0][i] - allminmax[1][i] for i in range(len(allminmax[0]))]
   return sum(out) / len(out)
 
-def colorScan(acceptable, direction, speed=200):
+def colorScan(acceptable, direction, errorNum, speed=200):
   if rgbtocolor(ColorA.rgb()) in acceptable:
     return rgbtocolor(ColorA.rgb())
   else:
@@ -564,8 +601,11 @@ def colorScan(acceptable, direction, speed=200):
         if len(colorList) >= 10:
           color = mode(colorList)
 
-    if color == None and len(colorList) > 0:
-      color = mode(colorList)
+    if color == None:
+      if len(colorList) > 0:
+        color = mode(colorList)
+      else:
+        color = errorNum
 
     robot.stop()
 
