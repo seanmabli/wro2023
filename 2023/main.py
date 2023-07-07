@@ -69,12 +69,17 @@ def main():
   # ** CONTAINER PICKUP **
 
   # blue
-  # armGrab(ud="down")
-  # armGrab(ud="uptomid", speed=200)
+  armGrab("mid->down")
+  armGrab("down->mid", speed=200)
+  time.sleep(3)
+  armGrab("mid->up", speed=300)
+  armGrab("up->mid")
 
   # green
-  armGrab(ud="down")
-  armGrab(ud="uptomid", speed=300)
+  # armGrab("up->down")
+  # armGrab("down->mid", speed=300)
+  # time.sleep(3)
+  # armGrab("mid->up", speed=300)
 
 
 def markingblockscanthread(distance):
@@ -317,27 +322,52 @@ def boatGrab(movement="open", percentage=1):
     BoatMotor.run(400)
     time.sleep(0.3 * percentage)
 
-def armGrab(ud, speed=None):
-  if ud == 'down':
+def armGrab(movement, speed=None):
+  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down']:
+    raise Exception('movement must be "up->down", "down->up", "down->mid", "mid->up", "up->mid", or "mid->down"')
+  if movement == 'up->down':
     time.sleep(0.001)
     if speed == None:
-      speed = 300
+      speed = 400
     ArmMotor.run_angle(speed, 250)
-  elif ud == 'uptomid':
+    ArmMotor.hold()
+  elif movement == 'up->mid':
+    time.sleep(0.001)
+    if speed == None:
+      speed = 400
+    ArmMotor.run_angle(speed, 105)
+    ArmMotor.hold()
+  elif movement == 'mid->down':
+    time.sleep(0.001)
+    if speed == None:
+      speed = 400
+    ArmMotor.run_angle(speed, 145)
+    ArmMotor.hold()
+  elif movement == 'down->up':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
     time.sleep(0.6 * (400 / speed))
-    ArmMotor.run_angle(speed, 50)
-    ArmMotor.stop()
-  elif ud == "full":
-    if speed == None:
-      speed = 200
-    ArmMotor.run_angle(speed, 200)
+    ArmMotor.run_angle(400, 10)
     ArmMotor.run(-400)
-    time.sleep(0.6)
-    ArmMotor.run_angle(speed, 200)
-    ArmMotor.stop()
+    time.sleep(0.15)
+    ArmMotor.hold()
+  elif movement == 'down->mid':
+    if speed == None:
+      speed = 400
+    ArmMotor.run(-speed)
+    time.sleep(0.35 * (400 / speed))
+    ArmMotor.hold()
+  elif movement == 'mid->up':
+    if speed == None:
+      speed = 400
+    ArmMotor.run(-speed)
+    time.sleep(0.25 * (400 / speed))
+    ArmMotor.run_angle(400, 10)
+    ArmMotor.run(-400)
+    time.sleep(0.15)
+    ArmMotor.hold()
+
 
 
 def sweep(sensor, direction, speed=100, whiteFirst=False):
