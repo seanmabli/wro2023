@@ -4,7 +4,7 @@ from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import Motor, ColorSensor, GyroSensor
 from pybricks.parameters import Port, Color, Button, Direction
 from pybricks.robotics import DriveBase
-import time, _thread, math, json
+import time, _thread, math, json, random
 
 ArmMotor = Motor(Port.A)
 RightMotor = Motor(Port.B)
@@ -20,27 +20,26 @@ robot = DriveBase(LeftMotor, RightMotor, wheel_diameter=94.2, axle_track=157)
 robot.settings(straight_speed=700)
 
 def main():
-  '''
-  global markingblocks, containerColors, containerpositions, boatpositions, boatAvailable, lock
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
-  containerpositions = [-5, -120, -215, -305]
-  boatpositions = [-85, -115, -148, -187]
+  containerPositions = [-5, -120, -215, -305]
+  boatPositions = [-85, -115, -148, -187]
   boatAvailable = [True, True, False, True]
   whitePosition = 520
-
-  lock = _thread.allocate_lock()
+  markingBlocks = [3, 3]
 
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
   a = time.time()
-  _thread.start_new_thread(markingblockscanthread, (1.1,))
-  lfpidBlack(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=15, whitethreshold=25, speed=350, kp=0.4)
-  lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='out')
+  lfpidDistance(distance=160, sensor=LeftColor, sideofsensor='out', speed=250)
+  markingBlocks[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  lfpidBlack(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=15, whitethreshold=25, speed=250, kp=0.4)
+  lfpidDistance(distance=20, sensor=LeftColor, sideofsensor='out', speed=250)
+  markingBlocks[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  print("markingBlocks:", markingBlocks)
+  lfpidDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=250)
   straight(150, speed=300)
-  lock.acquire()
   straight(-150)
-  lock.release()
   durn(turn=-110, type="tank")
   durn(turn=112, circleradius=-50, type="circle", speed=300)
   durn(turn=-160, type="tank")
@@ -65,7 +64,9 @@ def main():
 
   # ** CONTAINER SCAN **
   position = 0
-  durn(turn=-155, type="pivot", speed=300)
+  durn(turn=-153, type="pivot", speed=300)
+  time.sleep(3)
+  _thread.start_new_thread(boatGrab, ("close",))
   position += straight(-105, speed=300)
   containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   position += straight(-95, speed=300)
@@ -77,78 +78,77 @@ def main():
       position += straight(-95, speed=300)
       containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   containerColors = calculateColors(containerColors)[0]
-  print(containerColors)
+  print("real scan:", containerColors)
+  containerColors = calculateColors(containerColors, replaceRandomly=True)[0]
+  print("real scan + random if poorly scaned:", containerColors)
+  position += straight(-position, speed=300)
+  time.sleep(10)
 
   # ** CONTAINER PICKUP **
-  for _ in range(2):
-    newPosition, containerIndex = closestContainer(position)
-    print(newPosition, containerIndex)
+  for _ in range(1): # change to 2 later
+    print(position)
+    newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks)
     position += straight(newPosition - position, speed=300)
-    if containerColors[containerIndex] == 1:
+    if containerColors[containerIndex] == 1: # green
       armGrab("up->down")
       armGrab("down->mid", speed=300)
-      newPosition, boatIndex = closestBoat(position)
+      newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
       position += straight(newPosition - position, speed=300)
       armGrab("mid->up", speed=300)
-    else:
+    else: # blue
       armGrab("up->down")
       armGrab("down->mid", speed=200)
-      newPosition, boatIndex = closestBoat(position)
+      newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
       position += straight(newPosition - position, speed=300)
       armGrab("mid->up", speed=300)
-    markingblocks.remove(containerColors[containerIndex])
+    markingBlocks.remove(containerColors[containerIndex])
     containerColors[containerIndex] = 3
     boatAvailable[boatIndex] = False
   
-  straight(whitePosition - position, speed=300)
-  armGrab("up->down")
-  armGrab("down->mid", speed=300)
+  print(position)
   '''
+  # ** WHITE CONTAINER PICKUP **
+  position += straight(whitePosition - position, speed=300)
   armGrab("up->down")
   armGrab("down->mid", speed=300)
-  armGrab("mid->up", speed=300)
-  time.sleep(2)
-  armGrab("up->down")
-  armGrab("down->mid", speed=300)
-  boatGrab(movement="close")
-  time.sleep(2)
-  armGrab("mid->up", speed=300)
+  newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
+  position += straight(newPosition - position, speed=300)
+  boatAvailable[boatIndex] = False
+  '''
 
-
-
-def closestBoat(position, exclude=[]):
+def closestBoat(position, boatPositions, boatAvailable, exclude=[]):
   closest = 0
   while closest in exclude:
     closest += 1
-  for container, i in enumerate(boatpositions):
-    if abs(container - position) < abs(boatpositions[closest] - position) and i not in exclude:
+  for i, container in enumerate(boatPositions):
+    if abs(container - position) < abs(boatPositions[closest] - position) and i not in exclude:
       closest = i
   if boatAvailable[closest]:
-    return boatpositions[closest], closest
+    print("boat", boatPositions[closest], closest)
+    return boatPositions[closest], closest
   else:
     if len(exclude) == 3:
       return None
     exclude.append(closest)
-    return closestContainer(position, exclude=exclude)
+    return closestBoat(position, boatPositions, boatAvailable, exclude=exclude)
 
-def closestContainer(position, exclude=[]):
+def closestContainer(position, containerPositions, containerColors, markingBlocks, exclude=[]):
   closest = 0
   while closest in exclude:
     closest += 1
-  for container, i in enumerate(containerpositions):
-    if abs(container - position) < abs(containerpositions[closest] - position) and i not in exclude:
+  for i, container in enumerate(containerPositions):
+    if abs(container - position) < abs(containerPositions[closest] - position) and i not in exclude:
       closest = i
-  print(closest, containerColors[closest], markingblocks)
-  if containerColors[closest] in markingblocks:
-    return containerpositions[closest], closest
+  if containerColors[closest] in markingBlocks:
+    print("container", containerPositions[closest], closest)
+    return containerPositions[closest], closest
   else:
-    print(exclude)
     if len(exclude) == 3:
       return None
     exclude.append(closest)
-    return closestContainer(position, exclude=exclude)
+    return closestContainer(position, containerPositions, containerColors, exclude=exclude)
 
-def calculateColors(colorList):
+def calculateColors(colorList, replaceRandomly=False):
   if colorList.count(3) == 2 and (colorList.count(1) == 2 or colorList.count(2) == 2):
     colorList = list(map(lambda x: (1 if colorList.count(2) == 2 else 2) if x == 3 else x, colorList))
     return (colorList, True)
@@ -161,23 +161,26 @@ def calculateColors(colorList):
   elif colorList.count(3) == 0:
     return (colorList, True)
   else:
+    if replaceRandomly:
+      for i in range(4):
+        if colorList[i] == 3:
+          colorList[i] = random.randint(1, 2)
     return (colorList, False)
 
-def markingblockscanthread(duration):
-  lock.acquire()
+def markingBlockscan(duration):
   colorList = []
   newStartTime = time.time()
   while abs(newStartTime - time.time()) < abs(duration):
     colorList.append(rgbtocolor(ColorA.rgb()))
-  global markingblocks
-  markingblocks = []
+  global markingBlocks
+  markingBlocks = []
   if colorList.count(1) / len(colorList) > 0.05:
-    markingblocks.append(1)
+    markingBlocks.append(1)
   if colorList.count(2) / len(colorList) > 0.05:
-    markingblocks.append(2)
-  if len(markingblocks) == 1:
-    markingblocks = [markingblocks[0], markingblocks[0]]
-  lock.release()
+    markingBlocks.append(2)
+  if len(markingBlocks) == 1:
+    markingBlocks = [markingBlocks[0], markingBlocks[0]]
+  print(markingBlocks)
 
 def recordrli(distance):                                                         
   startdistance = robot.distance()
