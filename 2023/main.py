@@ -21,8 +21,8 @@ robot.settings(straight_speed=700)
 
 def main():
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
-  containerPositions = [-5, -120, -215, -305]
-  boatPositions = [-85, -115, -148, -187]
+  containerPositions = [225, 115, 5, -105]
+  boatPositions = [180, 110, 0, -10] # boatPositions[2] is not accurate because it is never used
   boatAvailable = [True, True, False, True]
   whitePosition = 520
   markingBlocks = [3, 3]
@@ -63,49 +63,52 @@ def main():
   boatGrab(movement="open")
 
   # ** CONTAINER SCAN **
-  position = 0
   durn(turn=-153, type="pivot", speed=300)
-  time.sleep(3)
-  _thread.start_new_thread(boatGrab, ("close",))
-  position += straight(-105, speed=300)
-  containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
-  position += straight(-95, speed=300)
-  containerColors[2] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  straight(-115, speed=300, deceleration=True)
+  containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  straight(-105, speed=300, deceleration=True)
+  containerColors[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  straightUntilBlack(direction=-1, speed=200)
+  position = 0
   if calculateColors(containerColors)[1] == False:
-    position += straight(-95, speed=300)
-    containerColors[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+    position += straight(-20, speed=300, deceleration=True)
+    containerColors[2] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
     if calculateColors(containerColors)[1] == False:
-      position += straight(-95, speed=300)
-      containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+      position += straight(-105, speed=300, deceleration=True)
+      containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   containerColors = calculateColors(containerColors)[0]
   print("real scan:", containerColors)
   containerColors = calculateColors(containerColors, replaceRandomly=True)[0]
   print("real scan + random if poorly scaned:", containerColors)
-  position += straight(-position, speed=300)
-  time.sleep(10)
+  position = calibratePos(position)
 
   # ** CONTAINER PICKUP **
-  for _ in range(1): # change to 2 later
-    print(position)
+  _thread.start_new_thread(boatGrab, ("open", 0.2))
+  for _ in range(2): # change to 2 later
     newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks)
-    position += straight(newPosition - position, speed=300)
+    position += straight(newPosition - position, speed=300, deceleration=True)
     if containerColors[containerIndex] == 1: # green
       armGrab("up->down")
-      armGrab("down->mid", speed=300)
+      armGrab("down->midup")
       newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
-      position += straight(newPosition - position, speed=300)
-      armGrab("mid->up", speed=300)
+      position += straight(newPosition - position, speed=300, deceleration=True)
+      boatGrab(movement="close", hold=True)
+      armGrab("midup->up")
+      time.sleep(0.3)
     else: # blue
       armGrab("up->down")
-      armGrab("down->mid", speed=200)
+      armGrab("down->midup")
       newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
-      position += straight(newPosition - position, speed=300)
-      armGrab("mid->up", speed=300)
+      position += straight(newPosition - position, speed=300, deceleration=True)
+      boatGrab(movement="close", hold=True)
+      armGrab("midup->up")
+      time.sleep(0.3)
+    _thread.start_new_thread(boatGrab, ("open",))
     markingBlocks.remove(containerColors[containerIndex])
     containerColors[containerIndex] = 3
     boatAvailable[boatIndex] = False
-  
-  print(position)
+    position = calibratePos(position)
+
   '''
   # ** WHITE CONTAINER PICKUP **
   position += straight(whitePosition - position, speed=300)
@@ -115,6 +118,14 @@ def main():
   position += straight(newPosition - position, speed=300)
   boatAvailable[boatIndex] = False
   '''
+
+def calibratePos(position):
+  if position > 0:
+    straightUntilBlack(direction=-1, speed=200)
+    return 0
+  else:
+    straightUntilBlack(direction=1, speed=200)
+    return -15
 
 def closestBoat(position, boatPositions, boatAvailable, exclude=[]):
   closest = 0
@@ -146,7 +157,7 @@ def closestContainer(position, containerPositions, containerColors, markingBlock
     if len(exclude) == 3:
       return None
     exclude.append(closest)
-    return closestContainer(position, containerPositions, containerColors, exclude=exclude)
+    return closestContainer(position, containerPositions, containerColors, markingBlocks, exclude=exclude)
 
 def calculateColors(colorList, replaceRandomly=False):
   if colorList.count(3) == 2 and (colorList.count(1) == 2 or colorList.count(2) == 2):
@@ -197,14 +208,53 @@ def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
   else:
     return 0
 
-def straight(distance, speed=400):
+def straightWithPosCalibrate(distance, position, speed=400): # not used, maybe remove
   if distance < 0:
     speed *= -1
   startdistance = robot.distance()
   while abs(robot.distance() - startdistance) < abs(distance):
-    robot.drive(speed, 0)
+    if (RightColor.reflection() + LeftColor.reflection()) / 2 > 40 and distance < 0:
+      while abs((RightColor.reflection() + LeftColor.reflection()) / 2 - 20) > 5:
+        if (RightColor.reflection() + LeftColor.reflection()) / 2 > 20:
+          robot.drive(speed / 4, 0)
+        else:
+          robot.drive(speed / 4, 0)
+      position = -260
+      resetDistance = robot.distance() - startdistance
+    if (RightColor.reflection() + LeftColor.reflection()) / 2 > 40 and distance > 0:
+      while abs((RightColor.reflection() + LeftColor.reflection()) / 2 - 20) > 5:
+        if (RightColor.reflection() + LeftColor.reflection()) / 2 > 20:
+          robot.drive(speed / 4, 0)
+        else:
+          robot.drive(speed / 4, 0)
+      position = -290
+      resetDistance = robot.distance() - startdistance
+    else:
+      robot.drive(speed, 0)
+      resetDistance = 0
+  robot.stop()
+  return position + distance - resetDistance
+
+def straight(distance, speed=400, deceleration=False):
+  if distance < 0:
+    speed *= -1
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
+    if deceleration and abs(robot.distance() - startdistance) / abs(distance) > 0.8:
+      robot.drive(speed / 4, 0)
+    elif deceleration and abs(robot.distance() - startdistance) / abs(distance) > 0.6:
+      robot.drive(speed / 2, 0)
+    else:
+      robot.drive(speed, 0)
   robot.stop()
   return distance
+
+def straightUntilBlack(direction=1, speed=400):
+  while (RightColor.reflection() + LeftColor.reflection()) / 2 > 35:
+    robot.drive(speed * direction, 0)
+  while (RightColor.reflection() + LeftColor.reflection()) / 2 > 15:
+    robot.drive(speed * direction / 2, 0)
+  robot.stop()
 
 '''
 def straightwithadjust(scandistance, movedistance, changefactor, scanspeed=150, movespeed=400):
@@ -410,7 +460,7 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0
 
   robot.stop()
 
-def boatGrab(movement="open", percentage=1):
+def boatGrab(movement="open", percentage=1, hold=False):
   if movement == "open":
     BoatMotor.stop()
     BoatMotor.run_angle(-400, 95 * percentage)
@@ -418,9 +468,11 @@ def boatGrab(movement="open", percentage=1):
   elif movement == "close":
     BoatMotor.run(400)
     time.sleep(0.3 * percentage)
+    if hold:
+      BoatMotor.hold()
 
 def armGrab(movement, speed=None):
-  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down']:
+  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down', 'down->midup', 'midup->up']:
     raise Exception('movement must be "up->down", "down->up", "down->mid", "mid->up", "up->mid", or "mid->down"')
   if movement == 'up->down':
     time.sleep(0.001)
@@ -440,26 +492,28 @@ def armGrab(movement, speed=None):
       speed = 400
     ArmMotor.run_angle(speed, 145)
     ArmMotor.hold()
-  elif movement == 'down->up':
+  elif movement == 'down->midup':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
     time.sleep(0.6 * (400 / speed))
-    ArmMotor.run_angle(400, 10)
+    ArmMotor.run_angle(400, 40)
+    ArmMotor.hold()
+  elif movement == 'midup->up':
     ArmMotor.run(-400)
     time.sleep(0.15)
-    ArmMotor.hold()
+    ArmMotor.stop()
   elif movement == 'down->mid':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.35 * (400 / speed))
+    time.sleep(0.3 * (400 / speed))
     ArmMotor.hold()
   elif movement == 'mid->up':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.25 * (400 / speed))
+    time.sleep(0.3 * (400 / speed))
     ArmMotor.run_angle(400, 10)
     ArmMotor.run(-400)
     time.sleep(0.15)
