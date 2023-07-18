@@ -68,15 +68,14 @@ def main():
   straight(10, speed=300)
   durn(turn=120, type="tank", speed=150)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=300, sensor=RightColor, sideofsensor='in', speed=400, kp=0.4)
+  lfpidDistance(distance=250, sensor=RightColor, sideofsensor='in', speed=400, kp=0.4)
   lfpidBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150, kp=0.4)
   lfpidDistance(distance=110, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
   durn(turn=120, type="tank", speed=150)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lfpidDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
   lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100, kp=0.4)
-  lfpidDistance(distance=50, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
-  sweep(sensor=LeftColor, direction="left", speed=50)
+  lfpidDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
   boatGrab(movement="open")
 
   # ** CONTAINER SCAN **
@@ -145,16 +144,19 @@ def main():
   newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=False)
   position += straight(newPosition - position, deceleration=True)
   armGrab("up->down")
-  armGrab("down->midup", speed=(200 if containerColors[containerIndex] == 1 else 400))
+  armGrab("down->midup", speed=(150 if containerColors[containerIndex] == 2 else 400))
   containerColors[containerIndex] = 3
   newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=False)
   position += straight(newPosition - position, deceleration=True)
   armGrab("midup->down")
-  armGrab("down->mid", speed=(200 if containerColors[containerIndex] == 1 else 400))
+  armGrab("down->mid", speed=(150 if containerColors[containerIndex] == 2 else 400))
   straight(650)
-  durn(turn=-150, type="tank", speed=400)
+  durn(turn=-150, type="tank")
   straight(250)
   straightUntilBlack(direction=1, speed=200)
+  straight(50)
+  durn(turn=-150, type="tank")
+
 
 @timefunc
 def calibratePos(position):
@@ -432,13 +434,13 @@ def armGrab(movement, speed=None):
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.3 * (400 / speed))
+    time.sleep(0.2 * (400 / speed))
     ArmMotor.hold()
   elif movement == 'mid->up':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.3 * (400 / speed))
+    time.sleep(0.4 * (400 / speed))
     ArmMotor.run_angle(400, 10)
     ArmMotor.run(-400)
     time.sleep(0.15)
