@@ -45,20 +45,19 @@ def main():
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
-  a = time.time()
-  lfpidDistance(distance=160, sensor=LeftColor, sideofsensor='out', speed=250)
+  lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='out', speed=200)
   markingBlocks[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
-  lfpidBlack(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=15, whitethreshold=25, speed=250, kp=0.4)
-  lfpidDistance(distance=20, sensor=LeftColor, sideofsensor='out', speed=250)
+  lineFollowingUntilLine(sensor=LeftColor, sideofsensor='out', startdistance=100, blackthreshold=15, whitethreshold=25, speed=200)
+  lineFollowingDistance(distance=10, sensor=LeftColor, sideofsensor='out', speed=200)
   markingBlocks[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   print("markingBlocks:", markingBlocks)
-  lfpidDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=250)
-  straight(150, speed=300)
-  straight(-150)
+  lineFollowingDistance(distance=40, sensor=LeftColor, sideofsensor='out', speed=300)
+  straight(130, speed=300)
+  straight(-130)
   durn(turn=-110, type="tank")
   durn(turn=112, circleradius=-50, type="circle", speed=300)
   durn(turn=-160, type="tank")
-  straight(-210, speed=250)
+  straight(-210)
   boatGrab(movement="close")
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
@@ -67,20 +66,21 @@ def main():
   straight(150)
   straightUntilBlack(direction=1, speed=200)
   straight(10, speed=300)
-  durn(turn=120, type="tank", speed=150)
+  durn(turn=120, type="tank", speed=300)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=250, sensor=RightColor, sideofsensor='in', speed=300, kp=0.4)
-  lfpidBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150, kp=0.4)
-  lfpidDistance(distance=110, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
-  durn(turn=120, type="tank", speed=150)
+  lineFollowingDistance(distance=250, sensor=RightColor, sideofsensor='in', speed=300)
+  lineFollowingUntilLine(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150)
+  lineFollowingDistance(distance=100, sensor=RightColor, sideofsensor='in', speed=150)
+  durn(turn=120, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
-  lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100, kp=0.4)
-  lfpidDistance(distance=65, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
+  lineFollowingDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingUntilLine(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
+  lineFollowingDistance(distance=65, sensor=LeftColor, sideofsensor='out', speed=100)
   boatGrab(movement="open")
+  durn(turn=-155, type="pivot", speed=300)
 
+  '''
   # ** CONTAINER SCAN **
-  durn(turn=-153, type="pivot", speed=300)
   straight(-115, deceleration=True)
   containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   straight(-105, deceleration=True)
@@ -141,6 +141,15 @@ def main():
   armGrab("midup->up")
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
+  # ** MOVE LARGE BOAT OUT TO SEA **
+  position += straight(265 - position, deceleration=True)
+  durn(turn=-153, fb="backward", type="pivot", speed=300)
+  straight(-40, deceleration=True)
+  boatGrab(movement="close")
+  '''
+
+  '''
+  # old
   # ** SMALL BOAT CONTAINER PICKUP **
   position = calibratePos(position)
   newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=False)
@@ -163,7 +172,7 @@ def main():
   durn(turn=-150, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lfpidDistance(distance=150, sensor=LeftColor, sideofsensor='out', speed=300, kp=0.6)
-  lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=25, speed=150, kp=0.4)
+  lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=25, speed=150)
   lfpidDistance(distance=440, sensor=LeftColor, sideofsensor='out', speed=200, kp=0.2)
   durn(turn=170, type="tank")
   straight(-800)
@@ -201,6 +210,7 @@ def main():
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   time.sleep(1)
   lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=300, kp=0.6, blacks=2, startdistance=100, waitdistance=400)
+  '''
 
 @timefunc
 def calibratePos(position):
@@ -367,9 +377,12 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=50, 
     else:
       if oppositeColor.reflection() > whitethreshold:
         white += 1
+        print("white", time.time() - starttime)
+        quit()
       if oppositeColor.reflection() < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()) and white > 0:
         count += 1
         white = 0
+        print("line", time.time() - starttime)
         lastdistance = abs(robot.distance())
 
     if abs(lastdistancechange - robot.distance()) > estdistance / len(speed) and num < len(speed) - 1:
@@ -383,6 +396,62 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=50, 
     derivative = error - lasterror
     turn = kp * error
     lasterror = error
+
+    robot.drive(speed[num], turn)
+
+  robot.stop()
+
+@timefunc
+def lineFollowingUntilLine(sensor, sideofsensor, blacks=1, waitdistance=50, startdistance=0, proportion=0.4, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None):
+  if sensor not in [RightColor, LeftColor]:
+    raise Exception('sensor must be RightColor or LeftColor')
+  if sideofsensor not in ['in', 'out']:
+    raise Exception('sideofsensor must be "in" or "out"')
+  if not isinstance(blackthreshold, int) and isinstance(blackthreshold, float):
+    raise Exception('blackthreshold must be an integer')
+  if not isinstance(whitethreshold, int) and isinstance(whitethreshold, float) and whitethreshold != None:
+    raise Exception('whitethreshold must be an integer')
+
+  if sensor == RightColor:
+    sideofsensor = 'in' if sideofsensor == 'out' else 'out'
+
+  if speed == []:
+    speed = [160]
+  elif type(speed) == int:
+    speed = [speed]
+  else:
+    speed = list(range(speed[0], speed[1], 1 if speed[0] < speed[1] else -1))
+  
+  target = (8 + 76) / 2 # Black  = 8, White = 76
+  count = 0
+
+  lastdistance = abs(robot.distance())
+  lastdistancechange = 0
+  num = 0
+  white = 0
+  oppositeColor = LeftColor if sensor == RightColor else RightColor
+  while count < blacks:
+    if whitethreshold == None:
+      if oppositeColor.reflection() < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()):
+        count += 1
+        lastdistance = abs(robot.distance())
+    else:
+      if oppositeColor.reflection() > whitethreshold:
+        white += 1
+      if oppositeColor.reflection() < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()) and white > 0:
+        count += 1
+        white = 0
+        lastdistance = abs(robot.distance())
+
+    if abs(lastdistancechange - robot.distance()) > estdistance / len(speed) and num < len(speed) - 1:
+      lastdistancechange = robot.distance()
+      num += 1
+
+    if sideofsensor == 'out':
+      error = target - sensor.reflection()
+    elif sideofsensor == 'in':
+      error = sensor.reflection() - target
+    turn = proportion * error
 
     robot.drive(speed[num], turn)
 
@@ -435,6 +504,50 @@ def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0
       robot.drive(speed[num], turn)
 
   robot.stop()
+
+@timefunc
+def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], proportion=0.4):
+  if sensor not in [RightColor, LeftColor]:
+    raise Exception('sensor must be RightColor or LeftColor')
+  if sideofsensor not in ['in', 'out']:
+    raise Exception('sideofsensor must be "in" or "out"')
+  
+  if sensor == RightColor:
+    sideofsensor = 'in' if sideofsensor == 'out' else 'out'
+
+  if speed == []:
+    speed = [150]
+    one = True
+  elif type(speed) == int:
+    speed = [speed]
+    one = True
+  else:
+    speed = list(range(speed[0], speed[1]))
+    one = False
+
+  target = (8 + 76) / 2 # Black  = 8, White = 76
+
+  lastdistance = 0
+  num = 0
+  startdistance = robot.distance()
+  while abs(robot.distance() - startdistance) < abs(distance):
+    if abs(lastdistance - robot.distance()) > distance / len(speed):
+      lastdistance = robot.distance()
+      num += 1
+    if sideofsensor == 'out':
+      error = target - sensor.reflection()
+    elif sideofsensor == 'in':
+      error = sensor.reflection() - target
+    turn = proportion * error
+
+    if one:
+      robot.drive(speed[0], turn)
+    else:
+      robot.drive(speed[num], turn)
+
+  robot.stop()
+
+
 
 @timefunc
 def boatGrab(movement="open", percentage=1, hold=False, speed=400):
