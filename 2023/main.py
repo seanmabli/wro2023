@@ -36,10 +36,11 @@ def timefunc(func):
 def main():
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
   containerPositions = [225, 130, 25, -85]
-  boatPositions = [180, 110, 0, -40] # boatPositions[2] is not accurate because it is never used
+  boatPositions = [170, 110, 0, -40] # boatPositions[2] is not accurate because it is never used
   boatAvailable = [True, True, False, True]
   whitePosition = 805
   markingBlocks = [3, 3]
+  smallBoatContainers = [3, 3]
 
   # ** START **
   straight(115)
@@ -68,14 +69,14 @@ def main():
   straight(10, speed=300)
   durn(turn=120, type="tank", speed=150)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
-  lfpidDistance(distance=250, sensor=RightColor, sideofsensor='in', speed=400, kp=0.4)
+  lfpidDistance(distance=250, sensor=RightColor, sideofsensor='in', speed=300, kp=0.4)
   lfpidBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=25, speed=150, kp=0.4)
   lfpidDistance(distance=110, sensor=RightColor, sideofsensor='in', speed=150, kp=0.4)
   durn(turn=120, type="tank", speed=150)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lfpidDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
   lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100, kp=0.4)
-  lfpidDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
+  lfpidDistance(distance=65, sensor=LeftColor, sideofsensor='out', speed=100, kp=0.4)
   boatGrab(movement="open")
 
   # ** CONTAINER SCAN **
@@ -108,7 +109,7 @@ def main():
       armGrab("down->midup")
       newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=100)
+      boatGrab(movement="close", hold=True, speed=140) # if stuck on ramp or overshooting adjust this vaue
       armGrab("midup->up")
       time.sleep(0.3)
     else: # blue
@@ -116,7 +117,7 @@ def main():
       armGrab("down->midup", speed=150)
       newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=200)
+      boatGrab(movement="close", hold=True, speed=250)
       armGrab("midup->up")
       time.sleep(0.3)
     _thread.start_new_thread(boatGrab, ("open", 1.3))
@@ -136,27 +137,70 @@ def main():
   newPosition, boatIndex = closestBoat(position, boatPositions, boatAvailable)
   position += straight(newPosition - position, deceleration=True)
   boatAvailable[boatIndex] = False
-  boatGrab(movement="close", hold=True, speed=100)
+  boatGrab(movement="close", hold=True, speed=(100 if boatIndex == 0 else 140))
   armGrab("midup->up")
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
   # ** SMALL BOAT CONTAINER PICKUP **
+  position = calibratePos(position)
   newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=False)
   position += straight(newPosition - position, deceleration=True)
   armGrab("up->down")
   armGrab("down->midup", speed=(150 if containerColors[containerIndex] == 2 else 400))
+  smallBoatContainers[0] = containerColors[containerIndex]
   containerColors[containerIndex] = 3
+  position = calibratePos(position)
   newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=False)
   position += straight(newPosition - position, deceleration=True)
   armGrab("midup->down")
   armGrab("down->mid", speed=(150 if containerColors[containerIndex] == 2 else 400))
-  straight(650)
-  durn(turn=-150, type="tank")
-  straight(250)
-  straightUntilBlack(direction=1, speed=200)
-  straight(50)
-  durn(turn=-150, type="tank")
+  smallBoatContainers[1] = containerColors[containerIndex]
 
+  # ** MOVE TO SMALL BOAT **
+  straight(700 - position)
+  straightUntilBlack(direction=1, speed=200)
+  straight(155)
+  durn(turn=-150, type="tank")
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
+  lfpidDistance(distance=150, sensor=LeftColor, sideofsensor='out', speed=300, kp=0.6)
+  lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=25, speed=150, kp=0.4)
+  lfpidDistance(distance=440, sensor=LeftColor, sideofsensor='out', speed=200, kp=0.2)
+  durn(turn=170, type="tank")
+  straight(-800)
+  straightUntilBlack(direction=-1, speed=200)
+
+  # ** SMALL BOAT DROP OFF **
+  straight(30, deceleration=True)
+  boatGrab(movement="close", hold=True, speed=(140 if smallBoatContainers[0] == 1 else 200))
+  boatGrab("open", 1)
+  straight(60, deceleration=True)
+  armGrab("mid->midup", speed=(150 if containerColors[containerIndex] == 2 else 400))
+  boatGrab(movement="close", hold=True, speed=(140 if smallBoatContainers[1] == 1 else 200))
+  armGrab("midup->up")
+  
+  # ** MOVE OUT TO SEA **
+  # small boat
+  _thread.start_new_thread(boatGrab, ("open", ))
+  straight(30)
+  durn(turn=170, type="tank")
+  straight(-140)
+  boatGrab(movement="close")
+  durn(turn=-90, type="tank")
+  straight(700, deceleration=True)
+  durn(turn=270, type="tank")
+  boatGrab(movement="open", percentage=1.2)
+  # big boat
+  durn(35, type="pivot", fb="forward", speed=300)
+  straight(570)
+  durn(125, type="tank", fb="forward", speed=150)
+  straight(-340)
+  boatGrab(movement="close")
+  straight(20)
+  durn(turn=170, type="tank")
+  time.sleep(1)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
+  time.sleep(1)
+  lfpidBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=300, kp=0.6, blacks=2, startdistance=100, waitdistance=400)
 
 @timefunc
 def calibratePos(position):
@@ -284,7 +328,7 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = 
     RightMotor.hold()
 
 @timefunc
-def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, startdistance=0, kp=0.25, ki=0, kd=0.5, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
+def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=50, startdistance=0, kp=0.25, ki=0, kd=0.5, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
@@ -325,6 +369,7 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=25, 
         white += 1
       if oppositeColor.reflection() < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()) and white > 0:
         count += 1
+        white = 0
         lastdistance = abs(robot.distance())
 
     if abs(lastdistancechange - robot.distance()) > estdistance / len(speed) and num < len(speed) - 1:
@@ -405,7 +450,7 @@ def boatGrab(movement="open", percentage=1, hold=False, speed=400):
 
 @timefunc
 def armGrab(movement, speed=None):
-  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down', 'down->midup', 'midup->up', 'midup->down']:
+  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down', 'down->midup', 'midup->up', 'midup->down', 'mid->midup']:
     raise Exception('movement must be "up->down", "down->up", "down->mid", "mid->up", "up->mid", or "mid->down"')
   if movement == 'up->down':
     time.sleep(0.001)
@@ -444,6 +489,11 @@ def armGrab(movement, speed=None):
     ArmMotor.run_angle(400, 10)
     ArmMotor.run(-400)
     time.sleep(0.15)
+    ArmMotor.hold()
+  elif movement == 'mid->midup':
+    ArmMotor.run(-speed)
+    time.sleep(0.3 * (400 / speed))
+    ArmMotor.run_angle(400, 40)
     ArmMotor.hold()
 
 @timefunc
@@ -493,7 +543,7 @@ def sweep(sensor, direction, speed=100, whiteFirst=False):
   durn(robot.angle() - targetangle, type='tank', fb='forward', speed=speed)
 
 @timefunc
-def sTurn(rl, fb, turn, type='pivot', drive=0, turnSpeed=100): # rl = right-left, fb = forward-backward, turn = turn degrees(posotive), drive = drive between turns(positive)
+def sturn(rl, fb, turn, type='pivot', drive=0, turnSpeed=100): # rl = right-left, fb = forward-backward, turn = turn degrees(posotive), drive = drive between turns(positive)
   if rl not in ['right', 'left']:
     raise Exception('rl must be "right" or "left"')
   if fb not in ['forward', 'backward']:
@@ -570,5 +620,5 @@ starttime = time.time()
 main()
 robot.stop()
 for i in times:
-  print("total " + i + " time:", times[i])
-print("\ntotal time:", time.time() - starttime)
+  print("total " + i + " time:", round(times[i], 2))
+print("\ntotal time:", round(time.time() - starttime, 2))
