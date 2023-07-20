@@ -1,0 +1,3 @@
+lfpidblack = 1.25 rps
+straight = 1.33 rps
+luticrusmode = 3.59 rps
