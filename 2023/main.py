@@ -37,7 +37,7 @@ def main():
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
   containerPositions = [225, 130, 25, -85]
   largeBoatPositions = [170, 110, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
-  smallBoatPositions = [80, -10]
+  smallBoatPositions = [70, -10]
   largeBoatAvailable = [True, True, False, True]
   smallBoatAvailable = [True, True]
   whitePosition = 805
@@ -72,7 +72,7 @@ def main():
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
   lineFollowingBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=200, proportion=0.6)
-  lineFollowingDistance(distance=90, sensor=RightColor, sideofsensor='in', speed=200)
+  lineFollowingDistance(distance=80, sensor=RightColor, sideofsensor='in', speed=200)
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=100)
@@ -144,7 +144,7 @@ def main():
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
   # ** MOVE LARGE BOAT OUT TO SEA **
-  position += straight(265 - position, deceleration=True)
+  position += straight(275 - position, deceleration=True)
   durn(turn=-180, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
@@ -160,26 +160,28 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
   straightUntilBlack(direction=-1, speed=150)
   straight(90)
-  durn(turn=205, type="tank", speed=100)
-  straight(-500)
+  durn(turn=210, type="tank", speed=100)
+  straight(-300, speed=200)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=200, proportion=0.8)
+  straight(-315, speed=200)
+
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
-  lineFollowingDistance(distance=370, sensor=LeftColor, sideofsensor='out', speed=400)
+  lineFollowingDistance(distance=360, sensor=LeftColor, sideofsensor='out', speed=400)
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400, proportion=0.6)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400)
   straightUntilBlack(direction=-1, speed=200)
-  straight(145)
+  straight(140)
   durn(turn=-160, type="tank", speed=200)
-  _thread.start_new_thread(boatGrab, ("close", 0.3, True))
-  straight(-375)
+  _thread.start_new_thread(boatGrab, ("close", 0.2, True))
+  straight(-360)
   boatGrab(movement="close", percentage=0.9)
-  sturn(rl="left", fb="forward", turn=60)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400, proportion=0.6)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=0.8)
   lineFollowingDistance(distance=340, sensor=LeftColor, sideofsensor='out', speed=200)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=100)
   lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100)
@@ -188,7 +190,7 @@ def main():
 
   # ** CONTAINER PICKUP **
   _thread.start_new_thread(boatGrab, ("open", 0.3))
-  position = calibratePos(position)
+  position = calibratePos(10)
   for i in range(2):
     newPosition, containerIndex = closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=False)
     position += straight(newPosition - position, deceleration=True)
@@ -213,7 +215,7 @@ def main():
     smallBoatAvailable[boatIndex] = False
 
   # ** SMALL BOAT OUT TO SEA **
-  position += straight(265 - position, deceleration=True)
+  position += straight(275 - position, deceleration=True)
   durn(turn=-180, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
