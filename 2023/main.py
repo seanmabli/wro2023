@@ -6,6 +6,7 @@ from pybricks.parameters import Port, Color, Button, Direction
 from pybricks.robotics import DriveBase
 import time, _thread, random
 
+
 ArmMotor = Motor(Port.A)
 RightMotor = Motor(Port.B)
 LeftMotor = Motor(Port.C, Direction.COUNTERCLOCKWISE)
@@ -139,7 +140,7 @@ def main():
   newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
   position += straight(newPosition - position, deceleration=True)
   largeBoatAvailable[boatIndex] = False
-  boatGrab(movement="close", hold=True, speed=150)
+  boatGrab(movement="close", hold=True, speed=160)
   armGrab("midup->up")
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
@@ -160,10 +161,10 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
   straightUntilBlack(direction=-1, speed=150)
   straight(90)
-  durn(turn=210, type="tank", speed=100)
-  straight(-300, speed=200)
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=200, proportion=0.8)
-  straight(-315, speed=200)
+  durn(turn=220, type="tank", speed=100)
+  straight(-350, speed=200)
+  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=200, proportion=0.8)
+  straight(-330, speed=200)
 
   _thread.start_new_thread(boatGrab, ("open",))
 
@@ -184,7 +185,7 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=0.8)
   lineFollowingDistance(distance=340, sensor=LeftColor, sideofsensor='out', speed=200)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=100)
-  lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100, proportion=0.2)
   boatGrab(movement="open")
   durn(turn=-157, type="pivot", speed=300)
 
@@ -228,9 +229,9 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
+  _thread.start_new_thread(boatGrab, ("open",))
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
   durn(turn=165, type="tank")
-  _thread.start_new_thread(boatGrab, ("open",))
   straight(500)
 
 @timefunc
@@ -793,3 +794,10 @@ robot.stop()
 for i in times:
   print("total " + i + " time:", round(times[i], 2))
 print("\ntotal time:", round(time.time() - starttime, 2))
+
+markingColors = ["blue", "green"]
+pickupColors = ["blue", "blue", "green", "green"]
+'''
+print(f"marking: {markingColors[random.randint(0, len(markingColors) - 1)]}, {markingColors[random.randint(0, len(markingColors) - 1)]}")
+print(f"pickup: {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}")
+'''
