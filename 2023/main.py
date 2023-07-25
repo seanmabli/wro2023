@@ -161,15 +161,15 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
   straightUntilBlack(direction=-1, speed=150)
   straight(90)
-  durn(turn=220, type="tank", speed=100)
+  durn(turn=210, type="tank", speed=100)
   straight(-350, speed=200)
-  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=200, proportion=0.8)
+  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=200, proportion=1.2)
   straight(-330, speed=200)
 
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
-  lineFollowingDistance(distance=360, sensor=LeftColor, sideofsensor='out', speed=400)
+  lineFollowingDistance(distance=385, sensor=LeftColor, sideofsensor='out', speed=400)
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400, proportion=0.6)
