@@ -43,6 +43,8 @@ def main():
   smallBoatAvailable = [True, True]
   whitePosition = 805
   markingBlocks = [3, 3]
+  blueSpeed = 250
+  greenSpeed = 170
 
   # ** START **
   straight(115)
@@ -59,7 +61,7 @@ def main():
   straight(135, speed=300)
   straight(-130, deceleration=True)
   durn(turn=-110, type="tank")
-  durn(turn=115, circleradius=-70, type="circle", speed=400)
+  durn(turn=110, circleradius=-70, type="circle", speed=400)
   durn(turn=-160, type="tank")
   straight(-150)
   boatGrab(movement="close")
@@ -111,7 +113,7 @@ def main():
       armGrab("down->midup")
       newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=160) # if stuck on ramp or overshooting adjust this vaue
+      boatGrab(movement="close", hold=True, speed=greenSpeed) # if stuck on ramp or overshooting adjust this vaue
       armGrab("midup->up")
       time.sleep(0.3)
     else: # blue
@@ -119,7 +121,7 @@ def main():
       armGrab("down->midup", speed=200)
       newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=250)
+      boatGrab(movement="close", hold=True, speed=blueSpeed)
       armGrab("midup->up")
       time.sleep(0.3)
     _thread.start_new_thread(boatGrab, ("open", 1.3))
@@ -140,7 +142,7 @@ def main():
   newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
   position += straight(newPosition - position, deceleration=True)
   largeBoatAvailable[boatIndex] = False
-  boatGrab(movement="close", hold=True, speed=160)
+  boatGrab(movement="close", hold=True, speed=greenSpeed)
   armGrab("midup->up")
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
@@ -152,7 +154,7 @@ def main():
   straight(-300)
   straightUntilBlack(direction=-1, speed=200, colorSensor=RightColor)
   straight(160)
-  durn(turn=-210, type="tank", speed=200)
+  durn(turn=-210, type="tank", speed=100)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
@@ -164,12 +166,10 @@ def main():
   durn(turn=-200, type="tank", speed=200)
   straight(20)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
+  lineFollowingDistance(distance=160, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
   durn(turn=-390, type="tank", speed=100)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  durn(turn=5, type="tank", speed=100)
   straight(-240, speed=200)
-
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
@@ -204,7 +204,7 @@ def main():
       armGrab("down->midup")
       newPosition, boatIndex = closestBoat(position, smallBoatPositions, smallBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=150) # if stuck on ramp or overshooting adjust this vaue
+      boatGrab(movement="close", hold=True, speed=greenSpeed) # if stuck on ramp or overshooting adjust this vaue
       armGrab("midup->up")
       time.sleep(0.3)
     else: # blue
@@ -212,7 +212,7 @@ def main():
       armGrab("down->midup", speed=200)
       newPosition, boatIndex = closestBoat(position, smallBoatPositions, smallBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=250)
+      boatGrab(movement="close", hold=True, speed=blueSpeed)
       armGrab("midup->up")
       time.sleep(0.3)
     _thread.start_new_thread(boatGrab, ("open", 1.3))
@@ -227,7 +227,7 @@ def main():
   straight(-300)
   straightUntilBlack(direction=-1, speed=200, colorSensor=RightColor)
   straight(160)
-  durn(turn=-210, type="tank", speed=200)
+  durn(turn=-210, type="tank", speed=100)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
