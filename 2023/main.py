@@ -44,7 +44,8 @@ def main():
   whitePosition = 805
   markingBlocks = [3, 3]
   blueSpeed = 250
-  greenSpeed = 170
+  greenSpeed = 180
+  greenArmSpeed = 300
 
   # ** START **
   straight(115)
@@ -110,7 +111,7 @@ def main():
     position += straight(newPosition - position, deceleration=True)
     if containerColors[containerIndex] == 1: # green
       armGrab("up->down")
-      armGrab("down->midup")
+      armGrab("down->midup", speed=greenArmSpeed)
       newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
       boatGrab(movement="close", hold=True, speed=greenSpeed) # if stuck on ramp or overshooting adjust this vaue
@@ -136,7 +137,7 @@ def main():
   position = calibratePos(position)
   position += straight(whitePosition - position, deceleration=True)
   armGrab("up->down")
-  armGrab("down->midup")
+  armGrab("down->midup", speed=greenArmSpeed)
   position += straight(50 - position)
   position = calibratePos(position)
   newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
@@ -201,7 +202,7 @@ def main():
     position += straight(newPosition - position, deceleration=True)
     if containerColors[containerIndex] == 1: # green
       armGrab("up->down")
-      armGrab("down->midup")
+      armGrab("down->midup", speed=greenArmSpeed)
       newPosition, boatIndex = closestBoat(position, smallBoatPositions, smallBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
       boatGrab(movement="close", hold=True, speed=greenSpeed) # if stuck on ramp or overshooting adjust this vaue
@@ -235,6 +236,7 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
+  straight(20)
   durn(turn=165, type="tank")
   straight(500)
 
@@ -637,11 +639,11 @@ def armGrab(movement, speed=None):
       speed = 400
     ArmMotor.run(-speed)
     time.sleep(0.6 * (400 / speed))
-    ArmMotor.run_angle(400, 40)
+    ArmMotor.run_angle(400, 50)
     ArmMotor.hold()
   elif movement == 'midup->up':
     ArmMotor.run(-400)
-    time.sleep(0.15)
+    time.sleep(0.1875)
     ArmMotor.stop()
   elif movement == 'down->mid':
     if speed == None:
@@ -697,6 +699,8 @@ def sweep(sensor, direction, speed=100, whiteFirst=False, threshold=(0, 10), rev
 
   robot.stop()
 
+  print(info)
+  
   if info == []:
     return None # maybe add opposite later
 
@@ -791,6 +795,12 @@ def mode(List):
       counter = curr_frequency
       num = i
   return num
+
+
+ev3 = EV3Brick()
+ev3.screen.clear()
+while Button.CENTER not in ev3.buttons.pressed():
+  pass
 
 starttime = time.time()
 main()
