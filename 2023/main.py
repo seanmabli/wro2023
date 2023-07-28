@@ -51,11 +51,11 @@ def main():
   smallBoatAvailable = [True, True]
   whitePosition = 805
   markingBlocks = [3, 3]
-  blueSpeed = 260
-  greenSpeed = 260
+  blueSpeed = 275
+  greenSpeed = 300
   whiteSpeed = 400
   greenArmUpSpeed = 300
-  greenArmDownSpeed = 350
+  greenArmDownSpeed = 300
 
   # ** START **
   straight(115)
@@ -250,7 +250,6 @@ def main():
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=15, whitethreshold=45, speed=400) # change to distance if not detecint cloud
   straight(40)
   durn(turn=165, type="tank")
   straight(500)
