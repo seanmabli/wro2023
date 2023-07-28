@@ -35,6 +35,14 @@ def timefunc(func):
   return inner
 
 def main():
+  '''
+  National Colors:
+  Black - 9
+  Dark Blue - 13
+  Light Blue - 12
+  White - 62
+  Gray - 42
+  '''
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
   containerPositions = [225, 130, 25, -85]
   largeBoatPositions = [170, 110, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
@@ -44,16 +52,19 @@ def main():
   whitePosition = 805
   markingBlocks = [3, 3]
   blueSpeed = 250
-  greenSpeed = 180
+  greenSpeed = 220
+  whiteSpeed = 220
   greenArmSpeed = 300
 
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
   lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='out', speed=200)
+  time.sleep(0.1)
   markingBlocks[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200)
   lineFollowingDistance(distance=10, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.2)
+  time.sleep(0.1)
   markingBlocks[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   print("markingBlocks:", markingBlocks)
   markingBlocks = fixWithRandom(markingBlocks)
@@ -64,11 +75,11 @@ def main():
   durn(turn=-110, type="tank")
   durn(turn=110, circleradius=-70, type="circle", speed=400)
   durn(turn=-160, type="tank")
-  straight(-150)
+  straight(-170)
   boatGrab(movement="close")
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
-  straight(120)
+  straight(130)
   durn(turn=-160, type="tank", speed=100)
   straight(150)
   straightUntilBlack(direction=1, speed=200)
@@ -76,28 +87,28 @@ def main():
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
   lineFollowingBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=200, proportion=0.6)
-  lineFollowingDistance(distance=80, sensor=RightColor, sideofsensor='in', speed=200)
+  lineFollowingDistance(distance=125, sensor=RightColor, sideofsensor='in', speed=200)
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=30, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingDistance(distance=50, sensor=LeftColor, sideofsensor='out', speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
-  lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingDistance(distance=55, sensor=LeftColor, sideofsensor='out', speed=100)
   boatGrab(movement="open")
-  durn(turn=-157, type="pivot", speed=300)
+  durn(turn=-163, type="pivot", speed=300)
 
   # ** CONTAINER SCAN **
   straight(-125, deceleration=True)
-  containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
   straight(-105, deceleration=True)
-  containerColors[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+  containerColors[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
   straightUntilBlack(direction=-1, speed=200)
   position = 0
   if calculateColors(containerColors)[1] == False:
-    position += straight(-60, deceleration=True)
-    containerColors[2] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+    position += straight(-65, deceleration=True)
+    containerColors[2] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
     if calculateColors(containerColors)[1] == False:
       position += straight(-105, deceleration=True)
-      containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
+      containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
     position = calibratePos(position)
   containerColors = calculateColors(containerColors)[0]
   print("real scan:", containerColors)
@@ -143,7 +154,7 @@ def main():
   newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
   position += straight(newPosition - position, deceleration=True)
   largeBoatAvailable[boatIndex] = False
-  boatGrab(movement="close", hold=True, speed=greenSpeed)
+  boatGrab(movement="close", hold=True, speed=whiteSpeed)
   armGrab("midup->up")
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
@@ -152,25 +163,26 @@ def main():
   durn(turn=-180, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
-  straight(-300)
+  straight(-300, speed=300)
   straightUntilBlack(direction=-1, speed=200, colorSensor=RightColor)
-  straight(160)
+  straight(160, speed=300)
   durn(turn=-210, type="tank", speed=100)
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=300, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=40, speed=400) # change to distance if not detecint cloud
   straightUntilBlack(direction=-1, speed=150)
-  straight(160)
-  durn(turn=-200, type="tank", speed=200)
-  straight(20)
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  lineFollowingDistance(distance=160, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
+  straight(140)
+  durn(turn=-180, type="tank", speed=200)
+  straight(35)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
+  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   durn(turn=-390, type="tank", speed=100)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  straight(-240, speed=200)
+  durn(turn=-5, type="tank", speed=100)
+  straight(-260, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
@@ -182,17 +194,17 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400)
   straightUntilBlack(direction=-1, speed=200)
   straight(140)
-  durn(turn=-160, type="tank", speed=200)
-  _thread.start_new_thread(boatGrab, ("close", 0.2, True))
+  durn(turn=-156, type="tank", speed=200)
+  _thread.start_new_thread(boatGrab, ("close", 0.1, True))
   straight(-360)
   boatGrab(movement="close", percentage=0.9)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=0.8)
   lineFollowingDistance(distance=340, sensor=LeftColor, sideofsensor='out', speed=200)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=100)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=40, speed=100)
   lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100, proportion=0.2)
   boatGrab(movement="open")
-  durn(turn=-157, type="pivot", speed=300)
+  durn(turn=-162, type="pivot", speed=300)
 
   # ** CONTAINER PICKUP **
   _thread.start_new_thread(boatGrab, ("open", 0.3))
@@ -229,23 +241,23 @@ def main():
   straightUntilBlack(direction=-1, speed=200, colorSensor=RightColor)
   straight(160)
   durn(turn=-210, type="tank", speed=100)
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=0.6)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=300, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400) # change to distance if not detecint cloud
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=15, whitethreshold=45, speed=400) # change to distance if not detecint cloud
   straight(20)
   durn(turn=165, type="tank")
   straight(500)
 
 @timefunc
-def fixWithRandom(colorScan):
-  for i in range(len(colorScan)):
-    if colorScan[i] == 3:
-      colorScan[i] = random.randint(1, 2)
-  return colorScan
+def fixWithRandom(scan):
+  for i in range(len(scan)):
+    if scan[i] == 3:
+      scan[i] = random.randint(1, 2)
+  return scan
 
 @timefunc
 def calibratePos(position):
@@ -306,7 +318,7 @@ def calculateColors(colorList, replaceRandomly=False):
 def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
   if sum(rgb) < 4:
     return 0
-  elif rgb[2] > rgb[0] + rgb[1]:
+  elif rgb[2] > (rgb[0] + rgb[1]) * 1.25:
     return 2
   elif rgb[1] > (rgb[0] + rgb[2]) * 0.75 or (rgb[2] / (rgb[1] + 1)) > 0.6:
     return 1
@@ -698,8 +710,6 @@ def sweep(sensor, direction, speed=100, whiteFirst=False, threshold=(0, 10), rev
       info.append([sensor.reflection(), robot.angle()])
 
   robot.stop()
-
-  print(info)
   
   if info == []:
     return None # maybe add opposite later
@@ -746,8 +756,10 @@ def sturn(rl, fb, turn, type='pivot', drive=0, turnSpeed=400): # rl = right-left
 
 @timefunc
 def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
-  if rgbtocolor(ColorA.rgb()) in acceptable:
-    return rgbtocolor(ColorA.rgb())
+  outColor, outRGB = rgbtocolor(ColorA.rgb()), ColorA.rgb()
+  print(outRGB, outColor)
+  if outColor in acceptable:
+    return outColor
   else:
     startangle = robot.angle()
 
@@ -760,6 +772,7 @@ def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
     colorList = []
     while color not in acceptable and abs(startangle - robot.angle()) < 35:
       outColor = rgbtocolor(ColorA.rgb())
+      print(ColorA.rgb(), rgbtocolor(ColorA.rgb()))
       if outColor in acceptable:
         colorList.append(outColor)
         if len(colorList) >= 10:
@@ -771,18 +784,18 @@ def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
       else:
         color = errorNum
 
-    robot.stop()
+    RightMotor.stop()
 
     if direction == 'in':
-      RightMotor.run(speed / 2)
+      RightMotor.run(speed)
       while robot.angle() * outTurnIncrease > startangle:
         pass
     elif direction == 'out':
-      RightMotor.run(-speed / 2)
+      RightMotor.run(-speed)
       while robot.angle() * outTurnIncrease < startangle:
         pass
 
-    robot.stop()
+    RightMotor.stop()
     return color
 
 def mode(List):
