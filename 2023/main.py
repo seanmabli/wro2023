@@ -49,10 +49,10 @@ def main():
   smallBoatPositions = [55, -20]
   largeBoatAvailable = [True, True, False, True]
   smallBoatAvailable = [True, True]
-  whitePosition = 805
+  whitePosition = 800
   markingBlocks = [3, 3]
   blueSpeed = 275
-  greenSpeed = 300
+  greenSpeed = 400
   whiteSpeed = 400
   greenArmUpSpeed = 300
   greenArmDownSpeed = 300
@@ -153,11 +153,13 @@ def main():
   position += straight(50 - position)
   position = calibratePos(position)
   newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
-  position += straight(newPosition - position, deceleration=True)
+  position += straight(newPosition - position + 10, deceleration=True)
   largeBoatAvailable[boatIndex] = False
+  durn(turn=-10, type="pivot", speed=300)
   boatGrab(movement="close", hold=True, speed=whiteSpeed)
   armGrab("midup->up")
   time.sleep(0.3)
+  durn(turn=-10, fb="backward", type="pivot", speed=300)
   _thread.start_new_thread(boatGrab, ("open", 1.3))
 
   # ** MOVE LARGE BOAT OUT TO SEA **
