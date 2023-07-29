@@ -44,14 +44,14 @@ def main():
   Gray - 42
   '''
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
-  containerPositions = [225, 125, 25, -85]
+  containerPositions = [225, 115, 25, -85]
   largeBoatPositions = [170, 105, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
   smallBoatPositions = [55, -20]
   largeBoatAvailable = [True, True, False, True]
   smallBoatAvailable = [True, True]
   whitePosition = 800
   markingBlocks = [3, 3]
-  blueSpeed = 275
+  blueSpeed = 300
   greenSpeed = 400
   whiteSpeed = 400
   greenArmUpSpeed = 300
@@ -185,7 +185,7 @@ def main():
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   durn(turn=-390, type="tank", speed=100)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
-  durn(turn=-5, type="tank", speed=100)
+  durn(turn=-7, type="tank", speed=100)
   straight(-270, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
 
@@ -208,7 +208,7 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=40, speed=100)
   lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100, proportion=0.2)
   boatGrab(movement="open")
-  durn(turn=-162, type="pivot", speed=300)
+  durn(turn=-158, type="pivot", speed=300)
 
   # ** CONTAINER PICKUP **
   _thread.start_new_thread(boatGrab, ("open", 0.3))
@@ -238,7 +238,7 @@ def main():
 
   # ** SMALL BOAT OUT TO SEA **
   position += straight(265 - position, deceleration=True)
-  _thread.start_new_thread(boatGrab, ("close", 0.1, True))
+  _thread.start_new_thread(boatGrab, ("close", 0.15, True))
   durn(turn=-180, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
@@ -252,8 +252,8 @@ def main():
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
-  straight(40)
-  durn(turn=165, type="tank")
+  straight(70)
+  durn(turn=170, type="tank")
   straight(500)
 
 @timefunc
