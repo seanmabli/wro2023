@@ -164,7 +164,7 @@ def main():
 
   # Intersection D (from Open Ocean Base) to Intersection C **
   '''
-  straight(170)
+  straight(190)
   durn(turn=-160, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 10))
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300, proportion=0.8)
@@ -180,8 +180,8 @@ def main():
 
   # ** Intersection C (from Intersection D) to White Containers **
   '''
-  lineFollowingDistance(distance=170, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=-165, type="tank")
+  lineFollowingDistance(distance=180, sensor=LeftColor, sideofsensor='in', speed=400)
+  durn(turn=-160, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=380, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
   '''
@@ -204,9 +204,9 @@ def main():
 
   # ** Intersection B (from Intersection C) to Small Ship **
   '''
-  lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='in', speed=400)
+  lineFollowingDistance(distance=95, sensor=LeftColor, sideofsensor='in', speed=400)
   durn(turn=160, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=200)
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='out', speed=300)
   '''
 
