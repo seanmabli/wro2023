@@ -81,6 +81,15 @@ def main():
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=200)
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='out', speed=300)
 
+  # ** Intersection D (from Intersection C) to Open Ocean Base **
+  straight(100)
+  durn(turn=160, type="tank")
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
+  lineFollowingDistance(distance=250, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
+  durn(turn=-280, turn="tank", speed=300)
+  straight(-400)
+  bigArmGrab(movement="open")
+
 @timefunc
 def fixWithRandom(scan):
   for i in range(len(scan)):
