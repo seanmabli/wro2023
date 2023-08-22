@@ -4,7 +4,7 @@
           "name": "Download and Run wro/2023/main.py",
           "type": "ev3devBrowser",
           "request": "launch",
-          "program": "/home/robot/wro2023/2023/surpriserule.py"
+          "program": "/home/robot/wro2023/2023/main.py"
       }
   ]
 }

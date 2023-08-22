@@ -43,6 +43,7 @@ def main():
   White - 62
   Gray - 42
   '''
+
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
   containerPositions = [225, 115, 25, -85]
   largeBoatPositions = [170, 105, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
@@ -54,8 +55,19 @@ def main():
   blueSpeed = 300
   greenSpeed = 400
   whiteSpeed = 400
-  greenArmUpSpeed = 300
+  greenArmMidSpeed = 300
+  greenArmUpSpeed = 375
   greenArmDownSpeed = 300
+  blueArmUpSpeed = 150
+
+  '''
+  for i in range(3):
+    armGrab("up->down", speed=greenArmDownSpeed)
+    armGrab("down->mid", speed=greenArmUpSpeed)
+    time.sleep(0.5)
+    armGrab("mid->up", speed=greenArmUpSpeed)
+    time.sleep(1)
+  '''
 
   # ** START **
   straight(115)
@@ -88,14 +100,15 @@ def main():
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=RightColor, direction="left", whiteFirst=True)
   lineFollowingBlack(sensor=RightColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
-  lineFollowingDistance(distance=125, sensor=RightColor, sideofsensor='in', speed=200)
+  lineFollowingDistance(distance=90, sensor=RightColor, sideofsensor='in', speed=200)
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=50, sensor=LeftColor, sideofsensor='out', speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
   lineFollowingDistance(distance=55, sensor=LeftColor, sideofsensor='out', speed=100)
   boatGrab(movement="open")
-  durn(turn=-162, type="pivot", speed=300)
+  straight(-10, speed=100)
+  durn(turn=-158, type="pivot", speed=300)
 
   # ** CONTAINER SCAN **
   straight(-130, deceleration=True)
@@ -123,21 +136,20 @@ def main():
     position += straight(newPosition - position, deceleration=True)
     if containerColors[containerIndex] == 1: # green
       armGrab("up->down", speed=greenArmDownSpeed)
-      armGrab("down->midup", speed=greenArmUpSpeed)
+      armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
-      position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=greenSpeed) # if stuck on ramp or overshooting adjust this vaue
-      armGrab("midup->up")
+      position += straight(newPosition - position + 10, deceleration=True)
+      durn(turn=-10, type="pivot", speed=200)
+      armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
+      durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down")
-      armGrab("down->midup", speed=200)
+      armGrab("down->mid", speed=blueArmUpSpeed)
       newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=blueSpeed)
-      armGrab("midup->up")
+      armGrab("mid->up", speed=blueArmUpSpeed)
       time.sleep(0.3)
-    _thread.start_new_thread(boatGrab, ("open", 1.3))
     markingBlocks.remove(containerColors[containerIndex])
     containerColors[containerIndex] = 3
     largeBoatAvailable[boatIndex] = False
@@ -149,18 +161,16 @@ def main():
   position = calibratePos(position)
   position += straight(whitePosition - position, deceleration=True)
   armGrab("up->down", speed=greenArmDownSpeed)
-  armGrab("down->midup", speed=greenArmUpSpeed)
+  armGrab("down->mid", speed=greenArmMidSpeed)
   position += straight(50 - position)
   position = calibratePos(position)
   newPosition, boatIndex = closestBoat(position, largeBoatPositions, largeBoatAvailable)
   position += straight(newPosition - position + 10, deceleration=True)
   largeBoatAvailable[boatIndex] = False
   durn(turn=-10, type="pivot", speed=300)
-  boatGrab(movement="close", hold=True, speed=whiteSpeed)
-  armGrab("midup->up")
+  armGrab("mid->up", speed=greenArmUpSpeed)
   time.sleep(0.3)
   durn(turn=-10, fb="backward", type="pivot", speed=300)
-  _thread.start_new_thread(boatGrab, ("open", 1.3))
 
   # ** MOVE LARGE BOAT OUT TO SEA **
   position += straight(275 - position, deceleration=True)
@@ -198,7 +208,7 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400)
   straightUntilBlack(direction=-1, speed=200)
   straight(140)
-  durn(turn=-156, type="tank", speed=200)
+  durn(turn=-164, type="tank", speed=200)
   _thread.start_new_thread(boatGrab, ("close", 0.1, True))
   straight(-360)
   boatGrab(movement="close", percentage=0.9)
@@ -207,6 +217,7 @@ def main():
   lineFollowingDistance(distance=340, sensor=LeftColor, sideofsensor='out', speed=200)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=40, speed=100)
   lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100, proportion=0.2)
+  straight(-10, speed=100)
   boatGrab(movement="open")
   durn(turn=-158, type="pivot", speed=300)
 
@@ -218,21 +229,20 @@ def main():
     position += straight(newPosition - position, deceleration=True)
     if containerColors[containerIndex] == 1: # green
       armGrab("up->down", speed=greenArmDownSpeed)
-      armGrab("down->midup", speed=greenArmUpSpeed)
+      armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = closestBoat(position, smallBoatPositions, smallBoatAvailable)
-      position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=greenSpeed) # if stuck on ramp or overshooting adjust this vaue
-      armGrab("midup->up")
+      position += straight(newPosition - position + 10, deceleration=True)
+      durn(turn=-10, type="pivot", speed=200)
+      armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
+      durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down")
-      armGrab("down->midup", speed=200)
+      armGrab("down->mid", speed=blueArmUpSpeed)
       newPosition, boatIndex = closestBoat(position, smallBoatPositions, smallBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
-      boatGrab(movement="close", hold=True, speed=blueSpeed)
-      armGrab("midup->up")
+      armGrab("mid->up", speed=blueArmUpSpeed)
       time.sleep(0.3)
-    _thread.start_new_thread(boatGrab, ("open", 1.3))
     containerColors[containerIndex] = 3
     smallBoatAvailable[boatIndex] = False
 
@@ -291,6 +301,7 @@ def closestContainer(position, containerPositions, containerColors, markingBlock
     if containerColors[i] in markingBlocks or (not useMarkingBlocks and containerColors[i] != 3):
       distances.append((abs(container - position), i))
   distances.sort(key=lambda x: x[0])
+  print(containerPositions[distances[0][1]], distances[0][1])
   return containerPositions[distances[0][1]], distances[0][1]
 
 @timefunc
@@ -671,10 +682,10 @@ def armGrab(movement, speed=None):
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.4 * (400 / speed))
-    ArmMotor.run_angle(400, 10)
+    time.sleep(0.33 * (400 / speed))
+    ArmMotor.run_angle(400, 20)
     ArmMotor.run(-400)
-    time.sleep(0.15)
+    time.sleep(0.2)
     ArmMotor.hold()
   elif movement == 'mid->midup':
     ArmMotor.run(-speed)
