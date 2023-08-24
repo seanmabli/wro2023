@@ -60,6 +60,13 @@ def main():
   greenArmDownSpeed = 300
   blueArmUpSpeed = 150
 
+  c="tank"
+
+  durn(turn=180, type=c, speed=200)
+  time.sleep(2)
+  durn(turn=-180, type=c, speed=200)
+  quit()
+
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
@@ -84,17 +91,17 @@ def main():
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
   straight(140)
-  durn(turn=-180, type="tank", speed=100)
+  durn(turn=-160, type="tank", speed=200)
   straight(150)
   straightUntilBlack(direction=1, speed=200)
-  straight(30)
+  straight(40)
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
-  lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='in', speed=200)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
+  lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='out', speed=200)
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingDistance(distance=50, sensor=LeftColor, sideofsensor='out', speed=100)
   time.sleep(1)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
   lineFollowingDistance(distance=65, sensor=LeftColor, sideofsensor='out', speed=100)
@@ -181,14 +188,14 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=40, speed=400) # change to distance if not detecint cloud
   straightUntilBlack(direction=-1, speed=150)
   straight(140)
-  durn(turn=-220, type="tank", speed=200)
+  durn(turn=-180, type="tank", speed=200)
   straight(35)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
-  lineFollowingDistance(distance=90, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
-  durn(turn=-430, type="tank", speed=100)
+  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
+  durn(turn=-410, type="tank", speed=100)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
   durn(turn=-7, type="tank", speed=100)
-  straight(-300, speed=400)
+  straight(-270, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
@@ -406,9 +413,11 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200, decelerati
   startangle = robot.angle()
   if type == 'tank':
     if turn < 0:
-      robot.drive(0, speed)
+      RightMotor.run(-speed)
+      LeftMotor.run(speed)
     else:
-      robot.drive(0, -speed)
+      RightMotor.run(speed)
+      LeftMotor.run(-speed)
   elif type == 'pivot':
     if turn < 0:
       LeftMotor.run(speed)
@@ -423,9 +432,9 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200, decelerati
   while abs(startangle - robot.angle()) < abs(turn):
     pass
 
-  if type == 'tank' or type == 'circle':
+  if type == 'circle':
     robot.stop()
-  elif type == 'pivot':
+  elif type == 'tank' or type == 'pivot':
     LeftMotor.hold()
     RightMotor.hold()
 
