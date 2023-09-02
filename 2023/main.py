@@ -60,13 +60,6 @@ def main():
   greenArmDownSpeed = 300
   blueArmUpSpeed = 150
 
-  c="tank"
-
-  durn(turn=180, type=c, speed=200)
-  time.sleep(2)
-  durn(turn=-180, type=c, speed=200)
-  quit()
-
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
@@ -97,6 +90,7 @@ def main():
   straight(40)
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
+  lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='out', speed=200, proportion=1)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
   lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='out', speed=200)
   durn(turn=120, type="tank", speed=200)
