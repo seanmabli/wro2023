@@ -61,6 +61,17 @@ def main():
   blueArmMidSpeed = 150
   blueArmUpSpeed = 100
 
+  '''
+  ev3 = EV3Brick()
+  while True:
+    while Button.CENTER not in ev3.buttons.pressed():
+      pass
+    armGrab("up->down", speed=greenArmDownSpeed)
+    armGrab("down->mid", speed=greenArmMidSpeed)
+    time.sleep(1)
+    armGrab("mid->up", speed=greenArmUpSpeed)
+  '''
+
   # ** START **
   straight(115)
   sweep(sensor=LeftColor, direction="left")
@@ -252,7 +263,6 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   durn(turn=165, type="tank", speed=400)
   straight(500, speed="dc")
-  
 
 @timefunc
 def fixWithRandom(scan):
