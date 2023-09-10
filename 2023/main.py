@@ -56,9 +56,10 @@ def main():
   greenSpeed = 400
   whiteSpeed = 400
   greenArmMidSpeed = 300
-  greenArmUpSpeed = 350
+  greenArmUpSpeed = 150
   greenArmDownSpeed = 300
-  blueArmUpSpeed = 150
+  blueArmMidSpeed = 150
+  blueArmUpSpeed = 100
 
   # ** START **
   straight(115)
@@ -96,7 +97,7 @@ def main():
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=120, sensor=LeftColor, sideofsensor='out', speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
-  lineFollowingDistance(distance=65, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingDistance(distance=70, sensor=LeftColor, sideofsensor='out', speed=100)
   boatGrab(movement="open")
   straight(-10, speed=100)
   durn(turn=-158, type="pivot", speed=300)
@@ -115,10 +116,11 @@ def main():
       position += straight(-105, deceleration=True)
       containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
     position = calibratePos(position)
-  containerColors = calculateColors(containerColors, markingBlocks)[0]
+  containerColors, replaceRandomly = calculateColors(containerColors, markingBlocks)
   print("real scan:", containerColors)
-  containerColors = replaceWithRandom(containerColors)
-  print("real scan + random if poorly scaned:", containerColors)
+  if not replaceRandomly:
+    containerColors = replaceWithRandom(containerColors)
+    print("real scan + random if poorly scaned:", containerColors)
 
   # ** CONTAINER PICKUP **
   for i in range(2):
@@ -135,7 +137,7 @@ def main():
       durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down")
-      armGrab("down->mid", speed=blueArmUpSpeed)
+      armGrab("down->mid", speed=blueArmMidSpeed)
       newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
       armGrab("mid->up", speed=blueArmUpSpeed)
@@ -167,24 +169,24 @@ def main():
   durn(turn=-180, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
-  straight(-300, speed=300)
+  straight(-300)
   straightUntilBlack(direction=-1, speed=200, colorSensor=RightColor)
-  straight(155, speed=300)
+  straight(160)
   durn(turn=-240, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=300, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400, proportion=1.2)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
-  straightUntilBlack(direction=-1, speed=150)
+  straightUntilBlack(direction=-1, speed=200)
   straight(140)
-  durn(turn=-180, type="tank", speed=200)
+  durn(turn=-195, type="tank", speed=200)
   straight(35)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
-  durn(turn=-410, type="tank", speed=300)
+  durn(turn=-430, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  durn(turn=-7, type="tank", speed=100)
+  durn(turn=15, type="tank", speed=200)
   straight(-270, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
 
@@ -226,7 +228,7 @@ def main():
       durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down")
-      armGrab("down->mid", speed=blueArmUpSpeed)
+      armGrab("down->mid", speed=blueArmMidSpeed)
       newPosition, boatIndex = accurateSmallBoatDropoff(position, smallBoatPositions, smallBoatAvailable, containerColor=2)
       position += straight(newPosition - position, deceleration=True)
       armGrab("mid->up", speed=blueArmUpSpeed)
@@ -236,23 +238,21 @@ def main():
 
   # ** SMALL BOAT OUT TO SEA **
   position += straight(265 - position, deceleration=True)
-  _thread.start_new_thread(boatGrab, ("close", 0.15, True))
   durn(turn=-180, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
   straight(-300)
   straightUntilBlack(direction=-1, speed=200, colorSensor=RightColor)
   straight(160)
-  durn(turn=-210, type="tank", speed=100)
+  durn(turn=-210, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=300, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400, proportion=1.2)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
-  _thread.start_new_thread(boatGrab, ("open",))
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
-  straight(70)
-  durn(turn=170, type="tank")
-  straight(500)
+  durn(turn=165, type="tank", speed=400)
+  straight(500, speed="dc")
+  
 
 @timefunc
 def fixWithRandom(scan):
@@ -298,11 +298,12 @@ def closestContainerPickup(position, containerPositions, containerColors, markin
     if containerColors[i] in markingBlocks or (not useMarkingBlocks and containerColors[i] != 3):
       distances.append((abs(container - position), i))
   distances.sort(key=lambda x: x[0])
+  print(distances)
   print(containerPositions[distances[0][1]], distances[0][1])
   return containerPositions[distances[0][1]], distances[0][1]
 
 @timefunc
-def calculateColors(colorList, markingBlocks, replaceRandomly=False):
+def calculateColors(colorList, markingBlocks):
   if colorList.count(3) == 2 and (colorList.count(1) == 2 or colorList.count(2) == 2):
     colorList = list(map(lambda x: (1 if colorList.count(2) == 2 else 2) if x == 3 else x, colorList))
     return (colorList, True)
@@ -314,24 +315,19 @@ def calculateColors(colorList, markingBlocks, replaceRandomly=False):
     return (colorList, True)
   elif colorList.count(3) == 0:
     return (colorList, True)
-  elif colorList.count(markingBlocks[0]) == 1 and colorList.count(markingBlocks[1]) == 1:
-    return (replaceWithRandom(colorList), True)
   else:
     return (colorList, False)
 
 def replaceWithRandom(colorList):
-  print("a")
   start = colorList.copy()
   for i in range(4):
     if colorList[i] == 3:
       colorList[i] = random.randint(1, 2)
-  print("b")
   while colorList.count(2) != colorList.count(1):
     colorList = start.copy()
     for i in range(4):
       if colorList[i] == 3:
         colorList[i] = random.randint(1, 2)
-  print("c")
   return colorList
 
 def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
@@ -346,17 +342,25 @@ def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
 
 @timefunc
 def straight(distance, speed=400, deceleration=False):
-  if distance < 0:
-    speed *= -1
-  startdistance = robot.distance()
-  while abs(robot.distance() - startdistance) < abs(distance):
-    if deceleration and abs(distance) - abs(robot.distance() - startdistance) < 50:
-      robot.drive(speed / 4, 0)
-    elif deceleration and abs(distance) - abs(robot.distance() - startdistance) < 100:
-      robot.drive(speed / 2, 0)
-    else:
-      robot.drive(speed, 0)
-  robot.stop()
+  if speed != "dc":
+    if distance < 0:
+      speed *= -1
+    startdistance = robot.distance()
+    while abs(robot.distance() - startdistance) < abs(distance):
+      if deceleration and abs(distance) - abs(robot.distance() - startdistance) < 50:
+        robot.drive(speed / 4, 0)
+      elif deceleration and abs(distance) - abs(robot.distance() - startdistance) < 100:
+        robot.drive(speed / 2, 0)
+      else:
+        robot.drive(speed, 0)
+    robot.stop()
+  else:
+    startdistance = robot.distance()
+    while abs(robot.distance() - startdistance) < abs(distance):
+      RightMotor.dc(100 * (1 if distance > 0 else -1))
+      LeftMotor.dc(100 * (1 if distance > 0 else -1))
+    RightMotor.hold()
+    LeftMotor.hold()
   return distance
 
 @timefunc
@@ -445,12 +449,17 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, speed=[],
     sideofsensor = 'in' if sideofsensor == 'out' else 'out'
 
   if speed == []:
-    speed = [160]
+    speed = [150]
+    speedType = "int"
   elif type(speed) == int:
     speed = [speed]
+    speedType = "int"
+  elif speed == "dc":
+    speedType = "dc"
   else:
-    speed = list(range(speed[0], speed[1], 1 if speed[0] < speed[1] else -1))
-  
+    speed = list(range(speed[0], speed[1]))
+    speedType = "list"
+
   target = (8 + 76) / 2 # Black  = 8, White = 76
   count = 0
 
@@ -481,7 +490,18 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, speed=[],
       error = sensor.reflection() - target
     turn = proportion * error
 
-    robot.drive(speed[num], turn)
+    if speedType == "dc":
+      print(turn)
+      if turn < 0:
+        RightMotor.dc(50)
+        LeftMotor.dc(50 - turn)
+      else:
+        RightMotor.dc(50 - turn)
+        LeftMotor.dc(50)
+    elif speedType == "int":
+      robot.drive(speed[0], turn)
+    elif speedType == "list":
+      robot.drive(speed[num], turn)
 
   robot.stop()
 
@@ -497,13 +517,15 @@ def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=
 
   if speed == []:
     speed = [150]
-    one = True
+    speedType = "int"
   elif type(speed) == int:
     speed = [speed]
-    one = True
+    speedType = "int"
+  elif speed == "dc":
+    speedType = "dc"
   else:
     speed = list(range(speed[0], speed[1]))
-    one = False
+    speedType = "list"
 
   target = (8 + 76) / 2 # Black  = 8, White = 76
 
@@ -511,7 +533,7 @@ def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=
   num = 0
   startdistance = robot.distance()
   while abs(robot.distance() - startdistance) < abs(distance):
-    if abs(lastdistance - robot.distance()) > distance / len(speed):
+    if speed != "dc" and abs(lastdistance - robot.distance()) > distance / len(speed):
       lastdistance = robot.distance()
       num += 1
     if sideofsensor == 'out':
@@ -520,9 +542,16 @@ def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=
       error = sensor.reflection() - target
     turn = proportion * error
 
-    if one:
+    if speedType == "dc":
+      if turn < 0:
+        RightMotor.dc(100)
+        LeftMotor.dc(100 - turn)
+      else:
+        RightMotor.dc(100 - turn)
+        LeftMotor.dc(100)
+    elif speedType == "int":
       robot.drive(speed[0], turn)
-    else:
+    elif speedType == "list":
       robot.drive(speed[num], turn)
 
   robot.stop()
@@ -579,7 +608,7 @@ def armGrab(movement, speed=None):
       speed = 400
     ArmMotor.run(-speed)
     time.sleep(0.33 * (400 / speed))
-    ArmMotor.run_angle(400, 15)
+    ArmMotor.run_angle(400, 18)
     ArmMotor.run(-400)
     time.sleep(0.2)
     ArmMotor.hold()
