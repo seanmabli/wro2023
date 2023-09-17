@@ -52,9 +52,6 @@ def main():
   smallBoatAvailable = [True, True]
   whitePosition = 800
   markingBlocks = [3, 3]
-  blueSpeed = 300
-  greenSpeed = 400
-  whiteSpeed = 400
   greenArmMidSpeed = 300
   greenArmUpSpeed = 150
   greenArmDownSpeed = 300
@@ -73,14 +70,13 @@ def main():
   '''
 
   # ** START **
+  starttimeA = time.time()
   straight(115)
   sweep(sensor=LeftColor, direction="left")
-  lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='out', speed=200)
-  time.sleep(0.1)
+  lineFollowingDistance(distance=145, sensor=LeftColor, sideofsensor='out', speed=200)
   markingBlocks[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200)
   lineFollowingDistance(distance=10, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.2)
-  time.sleep(0.1)
   markingBlocks[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   print("markingBlocks:", markingBlocks)
   markingBlocks = fixWithRandom(markingBlocks)
@@ -88,19 +84,21 @@ def main():
   lineFollowingDistance(distance=40, sensor=LeftColor, sideofsensor='out', speed=300)
   straight(130, speed=300)
   straight(-125, deceleration=True)
-  durn(turn=-110, type="tank")
-  durn(turn=92.5, circleradius=-60, type="circle", speed=400)
+  durn(turn=-98, type="tank")
+  durn(turn=80, circleradius=-60, type="circle")
   durn(turn=-160, type="tank")
-  straight(-150)
+  straight(-165)
   boatGrab(movement="close")
+  print("startimeA", time.time() - starttimeA)
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
+  starttimeB = time.time()
   straight(110)
-  durn(turn=-160, type="tank", speed=200)
+  durn(turn=-140, type="tank")
   straight(150)
   straightUntilBlack(direction=1, speed=200)
   straight(60)
-  durn(turn=120, type="tank", speed=300)
+  durn(turn=120, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
   lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='out', speed=200)
@@ -112,6 +110,7 @@ def main():
   boatGrab(movement="open")
   straight(-10, speed=100)
   durn(turn=-158, type="pivot", speed=300)
+  print("startimeB", time.time() - starttimeB)
 
   # ** CONTAINER SCAN **
   straight(-130, deceleration=True)
@@ -142,10 +141,12 @@ def main():
       armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position + 10, deceleration=True)
-      durn(turn=-10, type="pivot", speed=200)
+      if containerIndex == 0:
+        durn(turn=-10, type="pivot", speed=200)
       armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
-      durn(turn=-10, fb="backward", type="pivot", speed=200)
+      if containerIndex == 0:
+        durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down")
       armGrab("down->mid", speed=blueArmMidSpeed)
@@ -170,10 +171,12 @@ def main():
   newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
   position += straight(newPosition - position + 10, deceleration=True)
   largeBoatAvailable[boatIndex] = False
-  durn(turn=-10, type="pivot", speed=300)
+  if containerIndex == 0:
+    durn(turn=-10, type="pivot", speed=200)
   armGrab("mid->up", speed=greenArmUpSpeed)
   time.sleep(0.3)
-  durn(turn=-10, fb="backward", type="pivot", speed=300)
+  if containerIndex == 0:
+    durn(turn=-10, fb="backward", type="pivot", speed=200)
 
   # ** MOVE LARGE BOAT OUT TO SEA **
   position += straight(275 - position, deceleration=True)
@@ -197,7 +200,7 @@ def main():
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   durn(turn=-430, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  durn(turn=15, type="tank", speed=200)
+  durn(turn=18, type="tank", speed=200)
   straight(-270, speed=400)
   _thread.start_new_thread(boatGrab, ("open",))
 
@@ -209,7 +212,7 @@ def main():
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400)
   straightUntilBlack(direction=-1, speed=200)
-  straight(140)
+  straight(130)
   durn(turn=-164, type="tank", speed=200)
   _thread.start_new_thread(boatGrab, ("close", 0.1, True))
   straight(-360)
@@ -232,11 +235,13 @@ def main():
       armGrab("up->down", speed=greenArmDownSpeed)
       armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = accurateSmallBoatDropoff(position, smallBoatPositions, smallBoatAvailable, containerColor=1)
-      position += straight(newPosition - position + 10, deceleration=True)
-      durn(turn=-10, type="pivot", speed=200)
+      position += straight(newPosition - position + 10, deceleration=True)  
+      if containerIndex == 0:
+        durn(turn=-10, type="pivot", speed=200)
       armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
-      durn(turn=-10, fb="backward", type="pivot", speed=200)
+      if containerIndex == 0:
+        durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down")
       armGrab("down->mid", speed=blueArmMidSpeed)
@@ -407,7 +412,7 @@ def straightUntilBlack(direction=1, speed=400, angled=False, colorSensor=None):
 
 
 @timefunc
-def durn(turn, circleradius=30, type='tank', fb='forward', speed=200, deceleration=False): # durn = degree turn
+def durn(turn, circleradius=30, type='tank', fb='forward', speed=400, deceleration=False): # durn = degree turn
   if type not in ['tank', 'pivot', 'circle']:
     raise Exception('type must be "tank" or "pivot" or "circle"')
   if fb not in ['forward', 'backward']:
@@ -582,36 +587,19 @@ def boatGrab(movement="open", percentage=1, hold=False, stop=False, speed=400):
 
 @timefunc
 def armGrab(movement, speed=None):
-  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down', 'down->midup', 'midup->up', 'midup->down', 'mid->midup']:
-    raise Exception('movement must be "up->down", "down->up", "down->mid", "mid->up", "up->mid", or "mid->down"')
+  if movement not in ['up->down', 'down->mid', 'mid->up']:
+    raise Exception('movement must be "up->down", "down->mid", or "mid->up"')
   if movement == 'up->down':
     time.sleep(0.001)
     if speed == None:
       speed = 400
-    ArmMotor.run_angle(speed, 220)
+    ArmMotor.run_angle(speed, 225)
     ArmMotor.hold()
-  elif movement == 'midup->down':
-    time.sleep(0.001)
-    if speed == None:
-      speed = 400
-    ArmMotor.run_angle(speed, 180)
-    ArmMotor.hold()
-  elif movement == 'down->midup':
-    if speed == None:
-      speed = 400
-    ArmMotor.run(-speed)
-    time.sleep(0.6 * (400 / speed))
-    ArmMotor.run_angle(400, 50)
-    ArmMotor.hold()
-  elif movement == 'midup->up':
-    ArmMotor.run(-400)
-    time.sleep(0.1875)
-    ArmMotor.stop()
   elif movement == 'down->mid':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.2 * (400 / speed))
+    time.sleep(0.205 * (400 / speed))
     ArmMotor.hold()
   elif movement == 'mid->up':
     if speed == None:
@@ -621,11 +609,6 @@ def armGrab(movement, speed=None):
     ArmMotor.run_angle(400, 18)
     ArmMotor.run(-400)
     time.sleep(0.2)
-    ArmMotor.hold()
-  elif movement == 'mid->midup':
-    ArmMotor.run(-speed)
-    time.sleep(0.3 * (400 / speed))
-    ArmMotor.run_angle(400, 40)
     ArmMotor.hold()
 
 @timefunc
