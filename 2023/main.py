@@ -54,9 +54,10 @@ def main():
   markingBlocks = [3, 3]
   greenArmMidSpeed = 300
   greenArmUpSpeed = 150
-  greenArmDownSpeed = 300
+  greenArmDownSpeed = 350
   blueArmMidSpeed = 150
   blueArmUpSpeed = 100
+  blueArmDownSpeed = 400
 
   '''
   ev3 = EV3Brick()
@@ -82,22 +83,22 @@ def main():
   markingBlocks = fixWithRandom(markingBlocks)
   print("markingBlocks + random if poorly scaned:", markingBlocks)
   lineFollowingDistance(distance=40, sensor=LeftColor, sideofsensor='out', speed=300)
-  straight(130, speed=300)
+  straight(130)
   straight(-125, deceleration=True)
   durn(turn=-98, type="tank")
   durn(turn=80, circleradius=-60, type="circle")
-  durn(turn=-160, type="tank")
-  straight(-165)
+  durn(turn=-145, type="tank")
+  straight(-170)
   boatGrab(movement="close")
   print("startimeA", time.time() - starttimeA)
 
   # ** MOVE BOAT TO CONTAINER PICKUP **
   starttimeB = time.time()
   straight(110)
-  durn(turn=-140, type="tank")
+  durn(turn=-160, type="tank")
   straight(150)
-  straightUntilBlack(direction=1, speed=200)
-  straight(60)
+  straightUntilBlack(direction=1)
+  straight(30)
   durn(turn=120, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
@@ -141,14 +142,14 @@ def main():
       armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position + 10, deceleration=True)
-      if containerIndex == 0:
+      if boatIndex == 0:
         durn(turn=-10, type="pivot", speed=200)
       armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
-      if containerIndex == 0:
+      if boatIndex == 0:
         durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
-      armGrab("up->down")
+      armGrab("up->down", speed=blueArmDownSpeed)
       armGrab("down->mid", speed=blueArmMidSpeed)
       newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
       position += straight(newPosition - position, deceleration=True)
@@ -171,11 +172,12 @@ def main():
   newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
   position += straight(newPosition - position + 10, deceleration=True)
   largeBoatAvailable[boatIndex] = False
-  if containerIndex == 0:
+  print("whiteContainerIndex: ", boatIndex)
+  if boatIndex == 0:
     durn(turn=-10, type="pivot", speed=200)
   armGrab("mid->up", speed=greenArmUpSpeed)
   time.sleep(0.3)
-  if containerIndex == 0:
+  if boatIndex == 0:
     durn(turn=-10, fb="backward", type="pivot", speed=200)
 
   # ** MOVE LARGE BOAT OUT TO SEA **
@@ -200,8 +202,8 @@ def main():
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   durn(turn=-430, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  durn(turn=18, type="tank", speed=200)
-  straight(-270, speed=400)
+  durn(turn=15, type="tank")
+  straight(-290)
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
@@ -226,6 +228,7 @@ def main():
   straight(-10, speed=100)
   durn(turn=-158, type="pivot", speed=300)
 
+  
   # ** CONTAINER PICKUP **
   position = calibratePos(10)
   for i in range(2):
@@ -236,14 +239,10 @@ def main():
       armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = accurateSmallBoatDropoff(position, smallBoatPositions, smallBoatAvailable, containerColor=1)
       position += straight(newPosition - position + 10, deceleration=True)  
-      if containerIndex == 0:
-        durn(turn=-10, type="pivot", speed=200)
       armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
-      if containerIndex == 0:
-        durn(turn=-10, fb="backward", type="pivot", speed=200)
     else: # blue
-      armGrab("up->down")
+      armGrab("up->down", speed=blueArmDownSpeed)
       armGrab("down->mid", speed=blueArmMidSpeed)
       newPosition, boatIndex = accurateSmallBoatDropoff(position, smallBoatPositions, smallBoatAvailable, containerColor=2)
       position += straight(newPosition - position, deceleration=True)
@@ -267,9 +266,8 @@ def main():
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400)
   durn(turn=165, type="tank", speed=400)
-  straight(500, speed="dc")
+  straight(300, speed="dc")
 
-@timefunc
 def fixWithRandom(scan):
   for i in range(len(scan)):
     if scan[i] == 3:
@@ -288,7 +286,6 @@ def calibratePos(position):
     straightUntilBlack(direction=1, speed=200)
     return -15
 
-@timefunc
 def closestBoatDropoff(position, boatPositions, boatAvailable):
   distances = []
   for i, container in enumerate(boatPositions):
@@ -297,7 +294,6 @@ def closestBoatDropoff(position, boatPositions, boatAvailable):
   distances.sort(key=lambda x: x[0])
   return boatPositions[distances[0][1]], distances[0][1]
 
-@timefunc
 def accurateSmallBoatDropoff(position, boatPositions, boatAvailable, containerColor):
   if containerColor == 1 and boatAvailable[0]:
     return boatPositions[0], 0
@@ -306,7 +302,6 @@ def accurateSmallBoatDropoff(position, boatPositions, boatAvailable, containerCo
   else:
     return closestBoatDropoff(position, boatPositions, boatAvailable)
 
-@timefunc
 def closestContainerPickup(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=True):
   distances = []
   for i, container in enumerate(containerPositions):
@@ -317,7 +312,6 @@ def closestContainerPickup(position, containerPositions, containerColors, markin
   print(containerPositions[distances[0][1]], distances[0][1])
   return containerPositions[distances[0][1]], distances[0][1]
 
-@timefunc
 def calculateColors(colorList, markingBlocks):
   if colorList.count(3) == 2 and (colorList.count(1) == 2 or colorList.count(2) == 2):
     colorList = list(map(lambda x: (1 if colorList.count(2) == 2 else 2) if x == 3 else x, colorList))
@@ -750,7 +744,7 @@ main()
 robot.stop()
 for i in times:
   print("total " + i + " time:", round(times[i], 2))
-print("\ntotal time:", round(time.time() - starttime, 2))
+print("\ntotal time:", round(round(round(time.time() - starttime, 2), 2), 2))
 
 markingColors = ["blue", "green"]
 pickupColors = ["blue", "blue", "green", "green"]
