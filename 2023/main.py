@@ -82,14 +82,13 @@ def main():
   print("markingBlocks:", markingBlocks)
   markingBlocks = fixWithRandom(markingBlocks)
   print("markingBlocks + random if poorly scaned:", markingBlocks)
-  lineFollowingDistance(distance=40, sensor=LeftColor, sideofsensor='out', speed=300)
-  straight(133)
-  straight(-128, deceleration=True)
-  durn(turn=-98, type="tank")
-  durn(turn=85, circleradius=-60, type="circle")
-  straight(30, speed=100)
-  durn(turn=-155, type="tank")
-  time.sleep(1)
+  straight(175)
+  straight(-130, deceleration=True)
+  durn(turn=-100, type="tank")
+  straight(350)
+  durn(turn=85, type="tank")
+  straight(245)
+  durn(turn=-170, type="tank")
   straight(-200)
   boatGrab(movement="close")
   print("startimeA", time.time() - starttimeA)
@@ -97,41 +96,31 @@ def main():
   # ** MOVE BOAT TO CONTAINER PICKUP **
   starttimeB = time.time()
   straight(110)
-  time.sleep(1)
-  durn(turn=-170, type="tank")
-  time.sleep(1)
+  durn(turn=-200, type="tank")
   straight(150)
   straightUntilBlack(direction=1)
-  time.sleep(1)
-  straight(30)
+  straight(70)
   durn(turn=120, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=200, proportion=1)
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=200)
+  lineFollowingDistance(distance=92, sensor=LeftColor, sideofsensor='out', speed=200)
   durn(turn=120, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=125, sensor=LeftColor, sideofsensor='out', speed=100)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
   lineFollowingDistance(distance=70, sensor=LeftColor, sideofsensor='out', speed=100)
   boatGrab(movement="open")
-  straight(-10, speed=100)
-  durn(turn=-157, type="pivot", speed=300)
   print("startimeB", time.time() - starttimeB)
 
   # ** CONTAINER SCAN **
-  straight(-135 , deceleration=True)
-  containerColors[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
-  straight(-105, deceleration=True)
-  containerColors[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
-  straightUntilBlack(direction=-1, speed=200)
-  position = 0
-  if calculateColors(containerColors, markingBlocks)[1] == False:
-    position += straight(-65, deceleration=True)
-    containerColors[2] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
-    if calculateColors(containerColors, markingBlocks)[1] == False:
-      position += straight(-105, deceleration=True)
-      containerColors[3] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
-    position = calibratePos(position)
+  straight(-10, speed=100)
+  durn(turn=-60, type="pivot", speed=300)
+  containerColors[2] = turnColorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
+  durn(turn=-30, type="pivot", speed=300)
+  containerColors[1] = turnColorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
+  durn(turn=-30, type="pivot", speed=300)
+  containerColors[0] = turnColorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
+  durn(turn=-40, type="pivot", speed=300)
   containerColors, replaceRandomly = calculateColors(containerColors, markingBlocks)
   print("real scan:", containerColors)
   if not replaceRandomly:
@@ -139,6 +128,10 @@ def main():
     print("real scan + random if poorly scaned:", containerColors)
 
   # ** CONTAINER PICKUP **
+  straight(-240, deceleration=True)
+  straightUntilBlack(direction=-1, speed=200)
+  position = 0
+
   for i in range(2):
     newPosition, containerIndex = closestContainerPickup(position, containerPositions, containerColors, markingBlocks)
     position += straight(newPosition - position, deceleration=True)
@@ -190,7 +183,9 @@ def main():
   durn(turn=-170, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
+  time.sleep(1)
   straight(-300)
+  time.sleep(1)
   straightUntilBlack(direction=-1, colorSensor=RightColor)
   durn(turn=-180, type="pivot", speed=400)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
@@ -748,6 +743,56 @@ def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
 
     RightMotor.stop()
     return color
+
+@timefunc
+def turnColorScan(acceptable, direction, errorNum, speed=200):
+  outColor, outRGB = rgbtocolor(ColorA.rgb()), ColorA.rgb()
+  if outColor == 0:
+    outColor = 3
+  return outColor
+  '''
+  if outColor in acceptable:
+    return outColor
+  else:
+    startAngle = robot.angle()
+
+    if direction == 'in':
+      LeftMotor.run(-speed)
+    elif direction == 'out':
+      LeftMotor.run(speed)
+
+    color = None
+    colorList = []
+    while color not in acceptable and abs(startAngle - robot.angle()) < 40:
+      outColor = rgbtocolor(ColorA.rgb())
+      print(abs(startAngle - robot.angle()))
+      if outColor in acceptable:
+        colorList.append(outColor)
+        if len(colorList) >= 10:
+          color = mode(colorList)
+
+    if color == None:
+      if len(colorList) > 0:
+        color = mode(colorList)
+      else:
+        color = errorNum
+  
+    LeftMotor.stop()
+
+    if direction == 'in':
+      LeftMotor.run(speed)
+      print(robot.angle() - startAngle)
+      while robot.angle() > startAngle:
+        pass
+    elif direction == 'out':
+      LeftMotor.run(-speed)
+      print(robot.angle() - startAngle)
+      while robot.angle() < startAngle:
+        pass
+
+    LeftMotor.stop()
+    return color
+    '''
 
 def mode(inputList):
   counter = 0
