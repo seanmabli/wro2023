@@ -1,10 +1,10 @@
 {
   "configurations": [
       {
-          "name": "Download and Run wro/2023/main.py",
+          "name": "Download and Run",
           "type": "ev3devBrowser",
           "request": "launch",
-          "program": "/home/robot/wro2023/2023/main.py"
+          "program": "/home/robot/wro2023/2023/pointtopoint.py"
       }
   ]
 }

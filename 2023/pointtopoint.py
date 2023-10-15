@@ -57,17 +57,7 @@ def main():
   greenArmUpSpeed = 300
   greenArmDownSpeed = 300
 
-
-  liftGrab(movement="down", speed=300)
-  time.sleep(1)
-  liftGrab(movement="up", speed=300)
-  time.sleep(1)
-  liftGrab(movement="down", speed=300)
-  time.sleep(1)
-  liftGrab(movement="up", speed=300)
-  time.sleep(1)
   # ** Base to Intersection A (Includes Marking Block Scan) **
-  '''
   straight(115)
   sweep(sensor=LeftColor, direction="left")
   lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.8)
@@ -80,7 +70,6 @@ def main():
   print("markingBlocks:", markingBlocks)
   markingBlocks = fixWithRandom(markingBlocks)
   print("markingBlocks + random if poorly scaned:", markingBlocks)
-  '''
 
   # ** Intersection A to Fuel **
   '''
@@ -88,18 +77,14 @@ def main():
   '''
 
   # ** Intersection A (from Base) to Intersection B **
-  '''
   straight(170)
   durn(turn=-180, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 10))
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300, proportion=0.8)
-  '''
 
   # ** Intersection B (from Intersection A) to Intersection C (No Sweep) **
-  '''
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300)
-  '''
 
   # ** Intersection C (from Intersection B) to Intersection D (No Sweep) **
   '''
@@ -122,14 +107,12 @@ def main():
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=300, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
   '''
-
+  
   # ** Intersection C (from Intersection B) to Crane A **
-  '''
   lineFollowingDistance(distance=170, sensor=LeftColor, sideofsensor='in', speed=400)
   durn(turn=-180, type="tank")
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=350, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  '''
 
   # ** Intersection D (from Intersection B) to Crane B **
   '''
@@ -232,11 +215,18 @@ def main():
   straight(480)
   '''
 
-@timefunc
 def fixWithRandom(scan):
   for i in range(len(scan)):
-    if scan[i] == 3:
-      scan[i] = random.randint(1, 2)
+    if scan[i] == 3 and scan[0 if i == 1 else 1] == 1:
+      if random.random() >= 0.66:
+        scan[i] = 2
+      else:
+        scan[i] = 1
+    elif scan[i] == 3 and scan[0 if i == 1 else 1] == 2:
+      if random.random() >= 0.66:
+        scan[i] = 1
+      else:
+        scan[i] = 2
   return scan
 
 @timefunc
@@ -251,8 +241,7 @@ def calibratePos(position):
     straightUntilBlack(direction=1, speed=200)
     return -15
 
-@timefunc
-def closestBoat(position, boatPositions, boatAvailable):
+def closestBoatDropoff(position, boatPositions, boatAvailable):
   distances = []
   for i, container in enumerate(boatPositions):
     if boatAvailable[i]:
@@ -260,8 +249,15 @@ def closestBoat(position, boatPositions, boatAvailable):
   distances.sort(key=lambda x: x[0])
   return boatPositions[distances[0][1]], distances[0][1]
 
-@timefunc
-def closestContainer(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=True):
+def accurateSmallBoatDropoff(position, boatPositions, boatAvailable, containerColor):
+  if containerColor == 1 and boatAvailable[0]:
+    return boatPositions[0], 0
+  elif containerColor == 2 and boatAvailable[1]:
+    return boatPositions[1], 1
+  else:
+    return closestBoatDropoff(position, boatPositions, boatAvailable)
+
+def closestContainerPickup(position, containerPositions, containerColors, markingBlocks, useMarkingBlocks=True):
   distances = []
   for i, container in enumerate(containerPositions):
     if containerColors[i] in markingBlocks or (not useMarkingBlocks and containerColors[i] != 3):
@@ -269,8 +265,7 @@ def closestContainer(position, containerPositions, containerColors, markingBlock
   distances.sort(key=lambda x: x[0])
   return containerPositions[distances[0][1]], distances[0][1]
 
-@timefunc
-def calculateColors(colorList, replaceRandomly=False):
+def calculateColors(colorList, markingBlocks):
   if colorList.count(3) == 2 and (colorList.count(1) == 2 or colorList.count(2) == 2):
     colorList = list(map(lambda x: (1 if colorList.count(2) == 2 else 2) if x == 3 else x, colorList))
     return (colorList, True)
@@ -283,20 +278,22 @@ def calculateColors(colorList, replaceRandomly=False):
   elif colorList.count(3) == 0:
     return (colorList, True)
   else:
-    if replaceRandomly:
-      start = colorList.copy()
-      for i in range(4):
-        if colorList[i] == 3:
-          colorList[i] = random.randint(1, 2)
-      while colorList.count(2) != colorList.count(1):
-        colorList = start.copy()
-        for i in range(4):
-          if colorList[i] == 3:
-            colorList[i] = random.randint(1, 2)
     return (colorList, False)
 
+def replaceWithRandom(colorList):
+  start = colorList.copy()
+  for i in range(4):
+    if colorList[i] == 3:
+      colorList[i] = random.randint(1, 2)
+  while colorList.count(2) != colorList.count(1):
+    colorList = start.copy()
+    for i in range(4):
+      if colorList[i] == 3:
+        colorList[i] = random.randint(1, 2)
+  return colorList
+
 def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
-  if sum(rgb) < 4:
+  if sum(rgb) < 2:
     return 0
   elif rgb[2] > (rgb[0] + rgb[1]) * 1.25:
     return 2
@@ -307,17 +304,25 @@ def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
 
 @timefunc
 def straight(distance, speed=400, deceleration=False):
-  if distance < 0:
-    speed *= -1
-  startdistance = robot.distance()
-  while abs(robot.distance() - startdistance) < abs(distance):
-    if deceleration and abs(distance) - abs(robot.distance() - startdistance) < 50:
-      robot.drive(speed / 4, 0)
-    elif deceleration and abs(distance) - abs(robot.distance() - startdistance) < 100:
-      robot.drive(speed / 2, 0)
-    else:
-      robot.drive(speed, 0)
-  robot.stop()
+  if speed != "dc":
+    if distance < 0:
+      speed *= -1
+    startdistance = robot.distance()
+    while abs(robot.distance() - startdistance) < abs(distance):
+      if deceleration and abs(distance) - abs(robot.distance() - startdistance) < 50:
+        robot.drive(speed / 4, 0)
+      elif deceleration and abs(distance) - abs(robot.distance() - startdistance) < 100:
+        robot.drive(speed / 2, 0)
+      else:
+        robot.drive(speed, 0)
+    robot.stop()
+  else:
+    startdistance = robot.distance()
+    while abs(robot.distance() - startdistance) < abs(distance):
+      RightMotor.dc(100 * (1 if distance > 0 else -1))
+      LeftMotor.dc(100 * (1 if distance > 0 else -1))
+    RightMotor.hold()
+    LeftMotor.hold()
   return distance
 
 @timefunc
@@ -354,7 +359,7 @@ def straightUntilBlack(direction=1, speed=400, angled=False, colorSensor=None):
 
 
 @timefunc
-def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = degree turn
+def durn(turn, circleradius=30, type='tank', fb='forward', speed=400, deceleration=False): # durn = degree turn
   if type not in ['tank', 'pivot', 'circle']:
     raise Exception('type must be "tank" or "pivot" or "circle"')
   if fb not in ['forward', 'backward']:
@@ -366,9 +371,11 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = 
   startangle = robot.angle()
   if type == 'tank':
     if turn < 0:
-      robot.drive(0, speed)
+      RightMotor.run(-speed)
+      LeftMotor.run(speed)
     else:
-      robot.drive(0, -speed)
+      RightMotor.run(speed)
+      LeftMotor.run(-speed)
   elif type == 'pivot':
     if turn < 0:
       LeftMotor.run(speed)
@@ -383,14 +390,14 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=200): # durn = 
   while abs(startangle - robot.angle()) < abs(turn):
     pass
 
-  if type == 'tank' or type == 'circle':
+  if type == 'circle':
     robot.stop()
-  elif type == 'pivot':
+  elif type == 'tank' or type == 'pivot':
     LeftMotor.hold()
     RightMotor.hold()
 
 @timefunc
-def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=50, startdistance=0, kp=0.25, ki=0, kd=0.5, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None): # wait distance is the # of mm after a black it waits until continue detecting blacks
+def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=None, outprop=None, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None):
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
@@ -404,74 +411,20 @@ def lfpidBlack(sensor=RightColor, sideofsensor='in', blacks=1, waitdistance=50, 
     sideofsensor = 'in' if sideofsensor == 'out' else 'out'
 
   if speed == []:
-    speed = [160]
+    speed = [150]
+    speedType = "int"
   elif type(speed) == int:
     speed = [speed]
+    speedType = "int"
+  elif speed == "dc":
+    speedType = "dc"
   else:
-    speed = list(range(speed[0], speed[1], 1 if speed[0] < speed[1] else -1))
-  
-  target = (8 + 76) / 2 # Black  = 8, White = 76
-  error = 0
-  lasterror = 0
-  derivative = 0
-  count = 0
+    speed = list(range(speed[0], speed[1]))
+    speedType = "list"
 
-  lastdistance = abs(robot.distance())
-  lastdistancechange = 0
-  num = 0
-  white = 0
-  oppositeColor = LeftColor if sensor == RightColor else RightColor
-  while count < blacks:
-    if whitethreshold == None:
-      if oppositeColor.reflection() < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()):
-        count += 1
-        lastdistance = abs(robot.distance())
-    else:
-      if oppositeColor.reflection() > whitethreshold:
-        white += 1
-        quit()
-      if oppositeColor.reflection() < blackthreshold and lastdistance + waitdistance < abs(robot.distance()) and startdistance < abs(robot.distance()) and white > 0:
-        count += 1
-        white = 0
-        lastdistance = abs(robot.distance())
+  inprop = inprop if inprop != None else proportion
+  outprop = outprop if outprop != None else proportion
 
-    if abs(lastdistancechange - robot.distance()) > estdistance / len(speed) and num < len(speed) - 1:
-      lastdistancechange = robot.distance()
-      num += 1
-
-    if sideofsensor == 'out':
-      error = target - sensor.reflection()
-    elif sideofsensor == 'in':
-      error = sensor.reflection() - target
-    derivative = error - lasterror
-    turn = kp * error
-    lasterror = error
-
-    robot.drive(speed[num], turn)
-
-  robot.stop()
-
-@timefunc
-def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None):
-  if sensor not in [RightColor, LeftColor]:
-    raise Exception('sensor must be RightColor or LeftColor')
-  if sideofsensor not in ['in', 'out']:
-    raise Exception('sideofsensor must be "in" or "out"')
-  if not isinstance(blackthreshold, int) and isinstance(blackthreshold, float):
-    raise Exception('blackthreshold must be an integer')
-  if not isinstance(whitethreshold, int) and isinstance(whitethreshold, float) and whitethreshold != None:
-    raise Exception('whitethreshold must be an integer')
-
-  if sensor == RightColor:
-    sideofsensor = 'in' if sideofsensor == 'out' else 'out'
-
-  if speed == []:
-    speed = [160]
-  elif type(speed) == int:
-    speed = [speed]
-  else:
-    speed = list(range(speed[0], speed[1], 1 if speed[0] < speed[1] else -1))
-  
   target = (8 + 76) / 2 # Black  = 8, White = 76
   count = 0
 
@@ -481,6 +434,7 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, speed=[],
   white = 0
   oppositeColor = LeftColor if sensor == RightColor else RightColor
   while count < blacks:
+    print(oppositeColor.reflection())
     if whitethreshold == None:
       if oppositeColor.reflection() < blackthreshold:
         count += 1
@@ -498,64 +452,33 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, speed=[],
 
     if sideofsensor == 'out':
       error = target - sensor.reflection()
+      if error < 0:
+        turn = inprop * error
+      else:
+        turn = outprop * error
     elif sideofsensor == 'in':
       error = sensor.reflection() - target
-    turn = proportion * error
+      if error < 0:
+        turn = outprop * error
+      else:
+        turn = inprop * error
 
-    robot.drive(speed[num], turn)
-
-  robot.stop()
-
-@timefunc
-def lfpidDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], kp=0.25, ki=0, kd=0.5):
-  if sensor not in [RightColor, LeftColor]:
-    raise Exception('sensor must be RightColor or LeftColor')
-  if sideofsensor not in ['in', 'out']:
-    raise Exception('sideofsensor must be "in" or "out"')
-  
-  if sensor == RightColor:
-    sideofsensor = 'in' if sideofsensor == 'out' else 'out'
-
-  if speed == []:
-    speed = [150]
-    one = True
-  elif type(speed) == int:
-    speed = [speed]
-    one = True
-  else:
-    speed = list(range(speed[0], speed[1]))
-    one = False
-
-  target = (8 + 76) / 2 # Black  = 8, White = 76
-  gyrodev = []
-  error = 0
-  lasterror = 0
-  derivative = 0
-
-  lastdistance = 0
-  num = 0
-  startdistance = robot.distance()
-  while abs(robot.distance() - startdistance) < abs(distance):
-    if abs(lastdistance - robot.distance()) > distance / len(speed):
-      lastdistance = robot.distance()
-      num += 1
-    if sideofsensor == 'out':
-      error = target - sensor.reflection()
-    elif sideofsensor == 'in':
-      error = sensor.reflection() - target
-    derivative = error - lasterror
-    turn = kp * error
-    lasterror = error
-
-    if one:
+    if speedType == "dc":
+      if turn < 0:
+        RightMotor.dc(100)
+        LeftMotor.dc(100 - turn)
+      else:
+        RightMotor.dc(100 - turn)
+        LeftMotor.dc(100)
+    elif speedType == "int":
       robot.drive(speed[0], turn)
-    else:
+    elif speedType == "list":
       robot.drive(speed[num], turn)
 
   robot.stop()
 
 @timefunc
-def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], proportion=0.4):
+def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=[], proportion=0.4, inprop=None, outprop=None):
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
@@ -565,14 +488,19 @@ def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=
     sideofsensor = 'in' if sideofsensor == 'out' else 'out'
 
   if speed == []:
-    speed = [150]
-    one = True
+    speed = [400]
+    speedType = "int"
   elif type(speed) == int:
     speed = [speed]
-    one = True
+    speedType = "int"
+  elif speed == "dc":
+    speedType = "dc"
   else:
     speed = list(range(speed[0], speed[1]))
-    one = False
+    speedType = "list"
+
+  inprop = inprop if inprop != None else proportion
+  outprop = outprop if outprop != None else proportion
 
   target = (8 + 76) / 2 # Black  = 8, White = 76
 
@@ -580,18 +508,32 @@ def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=
   num = 0
   startdistance = robot.distance()
   while abs(robot.distance() - startdistance) < abs(distance):
-    if abs(lastdistance - robot.distance()) > distance / len(speed):
+    if speed != "dc" and abs(lastdistance - robot.distance()) > distance / len(speed):
       lastdistance = robot.distance()
       num += 1
     if sideofsensor == 'out':
       error = target - sensor.reflection()
+      if error < 0:
+        turn = inprop * error
+      else:
+        turn = outprop * error
     elif sideofsensor == 'in':
       error = sensor.reflection() - target
-    turn = proportion * error
+      if error < 0:
+        turn = outprop * error
+      else:
+        turn = inprop * error
 
-    if one:
+    if speedType == "dc":
+      if turn < 0:
+        RightMotor.dc(100)
+        LeftMotor.dc(100 - turn)
+      else:
+        RightMotor.dc(100 - turn)
+        LeftMotor.dc(100)
+    elif speedType == "int":
       robot.drive(speed[0], turn)
-    else:
+    elif speedType == "list":
       robot.drive(speed[num], turn)
 
   robot.stop()
@@ -611,78 +553,29 @@ def boatGrab(movement="open", percentage=1, hold=False, stop=False, speed=400):
       BoatMotor.stop()
 
 @timefunc
-def bigArmGrab(movement="open", percentage=1, hold=False, stop=False, speed=400):
-  if movement == "open":
-    BoatMotor.stop()
-    BoatMotor.run_angle(-speed, 80 * percentage)
-    time.sleep(0.01)
-  elif movement == "close":
-    BoatMotor.run(speed)
-    time.sleep(0.15 * percentage * (400 / speed))
-    if hold:
-      BoatMotor.hold()
-    if stop:
-      BoatMotor.stop()
-
-def liftGrab(movement="down", percentage=1, hold=False, stop=False, speed=400):
-  if movement == "down":
-    BoatMotor.stop()
-    BoatMotor.run_angle(-speed, 120 * percentage)
-    time.sleep(0.01)
-  elif movement == "up":
-    BoatMotor.run(speed)
-    time.sleep(0.05 * percentage * (400 / speed))
-    if hold:
-      BoatMotor.hold()
-    if stop:
-      BoatMotor.stop()
-
-@timefunc
 def armGrab(movement, speed=None):
-  if movement not in ['up->down', 'down->up', 'down->mid', 'mid->up', 'up->mid', 'mid->down', 'down->midup', 'midup->up', 'midup->down', 'mid->midup']:
-    raise Exception('movement must be "up->down", "down->up", "down->mid", "mid->up", "up->mid", or "mid->down"')
+  if movement not in ['up->down', 'down->mid', 'mid->up']:
+    raise Exception('movement must be "up->down", "down->mid", or "mid->up"')
   if movement == 'up->down':
     time.sleep(0.001)
     if speed == None:
       speed = 400
-    ArmMotor.run_angle(speed, 220)
+    ArmMotor.run_angle(speed, 225)
     ArmMotor.hold()
-  elif movement == 'midup->down':
-    time.sleep(0.001)
-    if speed == None:
-      speed = 400
-    ArmMotor.run_angle(speed, 180)
-    ArmMotor.hold()
-  elif movement == 'down->midup':
-    if speed == None:
-      speed = 400
-    ArmMotor.run(-speed)
-    time.sleep(0.6 * (400 / speed))
-    ArmMotor.run_angle(400, 50)
-    ArmMotor.hold()
-  elif movement == 'midup->up':
-    ArmMotor.run(-400)
-    time.sleep(0.1875)
-    ArmMotor.stop()
   elif movement == 'down->mid':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.2 * (400 / speed))
+    time.sleep(0.23 * (400 / speed))
     ArmMotor.hold()
   elif movement == 'mid->up':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.4 * (400 / speed))
-    ArmMotor.run_angle(400, 10)
+    time.sleep(0.29 * (400 / speed))
+    ArmMotor.run_angle(400, 18)
     ArmMotor.run(-400)
-    time.sleep(0.15)
-    ArmMotor.hold()
-  elif movement == 'mid->midup':
-    ArmMotor.run(-speed)
-    time.sleep(0.3 * (400 / speed))
-    ArmMotor.run_angle(400, 40)
+    time.sleep(0.2)
     ArmMotor.hold()
 
 @timefunc
@@ -795,45 +688,75 @@ def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
 
     if direction == 'in':
       RightMotor.run(speed)
-      while robot.angle() * outTurnIncrease > startangle:
+      while robot.angle() > startangle * outTurnIncrease:
         pass
     elif direction == 'out':
       RightMotor.run(-speed)
-      while robot.angle() * outTurnIncrease < startangle:
+      while robot.angle() < startangle * outTurnIncrease:
         pass
 
     RightMotor.stop()
     return color
 
-def mode(List):
+@timefunc
+def turnColorScan(acceptable, direction, errorNum, speed=200):
+  outColor, outRGB = rgbtocolor(ColorA.rgb()), ColorA.rgb()
+  if outColor in acceptable:
+    return outColor
+  else:
+    startAngle = robot.angle()
+
+    if direction == 'backward':
+      RightMotor.run(-speed)
+    elif direction == 'forward':
+      RightMotor.run(speed)
+
+    color = None
+    colorList = []
+    while color not in acceptable and abs(startAngle - robot.angle()) < 40:
+      outColor = rgbtocolor(ColorA.rgb())
+      if outColor in acceptable:
+        colorList.append(outColor)
+        if len(colorList) >= 5:
+          color = mode(colorList)
+
+    if color == None:
+      if len(colorList) > 0:
+        color = mode(colorList)
+      else:
+        color = errorNum
+  
+    RightMotor.stop()
+
+    if direction == 'backward':
+      RightMotor.run(speed)
+      while robot.angle() > startAngle:
+        pass
+    elif direction == 'forward':
+      RightMotor.run(-speed)
+      while robot.angle() < startAngle:
+        pass
+
+    RightMotor.stop()
+    return color
+
+def mode(inputList):
   counter = 0
-  num = List[0]
-    
-  for i in List:
-    curr_frequency = List.count(i)
-    if(curr_frequency> counter):
-      counter = curr_frequency
+  num = inputList[0]
+  for i in inputList:
+    if inputList.count(i) > counter:
+      counter = inputList.count(i)
       num = i
   return num
 
-
-'''
 ev3 = EV3Brick()
 ev3.screen.clear()
 while Button.CENTER not in ev3.buttons.pressed():
   pass
-'''
 
 starttime = time.time()
 main()
 robot.stop()
 for i in times:
   print("total " + i + " time:", round(times[i], 2))
-print("\ntotal time:", round(time.time() - starttime, 2))
-
-markingColors = ["blue", "green"]
-pickupColors = ["blue", "blue", "green", "green"]
-'''
-print(f"marking: {markingColors[random.randint(0, len(markingColors) - 1)]}, {markingColors[random.randint(0, len(markingColors) - 1)]}")
-print(f"pickup: {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}")
-'''
+print("\ntotal time:", round(round(round(time.time() - starttime, 2), 2), 2))

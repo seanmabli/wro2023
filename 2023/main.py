@@ -46,7 +46,7 @@ def main():
 
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
   containerPositions = [225, 115, 25, -85]
-  largeBoatPositions = [170, 105, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
+  largeBoatPositions = [185, 105, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
   smallBoatPositions = [55, -20]
   largeBoatAvailable = [True, True, False, True]
   smallBoatAvailable = [True, True]
@@ -84,11 +84,11 @@ def main():
   print("markingBlocks + random if poorly scaned:", markingBlocks)
   straight(175)
   straight(-130, deceleration=True)
-  durn(turn=-100, type="tank")
+  durn(turn=-100, type="tank", speed=200)
   straight(350)
-  durn(turn=85, type="tank")
-  straight(245)
-  durn(turn=-170, type="tank")
+  durn(turn=85, type="tank", speed=200)
+  straight(250)
+  durn(turn=-165, type="tank")
   straight(-200)
   boatGrab(movement="close")
   print("startimeA", time.time() - starttimeA)
@@ -96,7 +96,7 @@ def main():
   # ** MOVE BOAT TO CONTAINER PICKUP **
   starttimeB = time.time()
   straight(110)
-  durn(turn=-200, type="tank")
+  durn(turn=-180, type="tank")
   straight(150)
   straightUntilBlack(direction=1)
   straight(70)
@@ -114,13 +114,14 @@ def main():
 
   # ** CONTAINER SCAN **
   straight(-10, speed=100)
-  durn(turn=-60, type="pivot", speed=300)
-  containerColors[2] = turnColorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
+  durn(turn=-70, type="pivot", speed=300)
+  containerColors[2] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
+  durn(turn=-20, type="pivot", speed=300)
+  containerColors[1] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
   durn(turn=-30, type="pivot", speed=300)
-  containerColors[1] = turnColorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
-  durn(turn=-30, type="pivot", speed=300)
-  containerColors[0] = turnColorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=200)
-  durn(turn=-40, type="pivot", speed=300)
+  containerColors[0] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
+  durn(turn=-35.5, type="pivot", speed=300)
+  print(containerColors)
   containerColors, replaceRandomly = calculateColors(containerColors, markingBlocks)
   print("real scan:", containerColors)
   if not replaceRandomly:
@@ -172,20 +173,18 @@ def main():
   largeBoatAvailable[boatIndex] = False
   print("whiteContainerIndex: ", boatIndex)
   if boatIndex == 0:
-    durn(turn=-10, type="pivot", speed=200)
+    durn(turn=-30, type="pivot", speed=200)
   armGrab("mid->up", speed=greenArmUpSpeed)
   time.sleep(0.3)
   if boatIndex == 0:
-    durn(turn=-10, fb="backward", type="pivot", speed=200)
+    durn(turn=-30, fb="backward", type="pivot", speed=200)
 
   # ** MOVE LARGE BOAT OUT TO SEA **
   position += straight(275 - position, deceleration=True)
   durn(turn=-170, fb="backward", type="pivot", speed=400)
   straight(-40, deceleration=True)
   boatGrab(movement="close")
-  time.sleep(1)
   straight(-300)
-  time.sleep(1)
   straightUntilBlack(direction=-1, colorSensor=RightColor)
   durn(turn=-180, type="pivot", speed=400)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
@@ -193,13 +192,13 @@ def main():
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400, blacks=2)
   straightUntilBlack(direction=-1, speed=200)
   straight(140)
-  durn(turn=-190, type="tank", speed=200)
+  durn(turn=-195, type="tank", speed=200)
   straight(35)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
   lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
   durn(turn=-430, type="tank", speed=300)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  durn(turn=15, type="tank")
+  durn(turn=20, type="tank")
   straight(-290)
   _thread.start_new_thread(boatGrab, ("open",))
 
@@ -208,10 +207,12 @@ def main():
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
   lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
+  time.sleep(1)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400, blacks=2)
+  time.sleep(1)
   straightUntilBlack(direction=-1, speed=200)
   straight(130)
-  durn(turn=-164, type="tank", speed=200)
+  durn(turn=-172, type="tank", speed=200)
   _thread.start_new_thread(boatGrab, ("close", 0.1, True))
   straight(-360)
   boatGrab(movement="close", percentage=0.9)
@@ -308,8 +309,6 @@ def closestContainerPickup(position, containerPositions, containerColors, markin
     if containerColors[i] in markingBlocks or (not useMarkingBlocks and containerColors[i] != 3):
       distances.append((abs(container - position), i))
   distances.sort(key=lambda x: x[0])
-  print(distances)
-  print(containerPositions[distances[0][1]], distances[0][1])
   return containerPositions[distances[0][1]], distances[0][1]
 
 def calculateColors(colorList, markingBlocks):
@@ -340,7 +339,7 @@ def replaceWithRandom(colorList):
   return colorList
 
 def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
-  if sum(rgb) < 4:
+  if sum(rgb) < 2:
     return 0
   elif rgb[2] > (rgb[0] + rgb[1]) * 1.25:
     return 2
@@ -481,6 +480,7 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=No
   white = 0
   oppositeColor = LeftColor if sensor == RightColor else RightColor
   while count < blacks:
+    print(oppositeColor.reflection())
     if whitethreshold == None:
       if oppositeColor.reflection() < blackthreshold:
         count += 1
@@ -612,13 +612,13 @@ def armGrab(movement, speed=None):
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.205 * (400 / speed))
+    time.sleep(0.23 * (400 / speed))
     ArmMotor.hold()
   elif movement == 'mid->up':
     if speed == None:
       speed = 400
     ArmMotor.run(-speed)
-    time.sleep(0.33 * (400 / speed))
+    time.sleep(0.29 * (400 / speed))
     ArmMotor.run_angle(400, 18)
     ArmMotor.run(-400)
     time.sleep(0.2)
@@ -747,28 +747,23 @@ def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
 @timefunc
 def turnColorScan(acceptable, direction, errorNum, speed=200):
   outColor, outRGB = rgbtocolor(ColorA.rgb()), ColorA.rgb()
-  if outColor == 0:
-    outColor = 3
-  return outColor
-  '''
   if outColor in acceptable:
     return outColor
   else:
     startAngle = robot.angle()
 
-    if direction == 'in':
-      LeftMotor.run(-speed)
-    elif direction == 'out':
-      LeftMotor.run(speed)
+    if direction == 'backward':
+      RightMotor.run(-speed)
+    elif direction == 'forward':
+      RightMotor.run(speed)
 
     color = None
     colorList = []
     while color not in acceptable and abs(startAngle - robot.angle()) < 40:
       outColor = rgbtocolor(ColorA.rgb())
-      print(abs(startAngle - robot.angle()))
       if outColor in acceptable:
         colorList.append(outColor)
-        if len(colorList) >= 10:
+        if len(colorList) >= 5:
           color = mode(colorList)
 
     if color == None:
@@ -777,22 +772,19 @@ def turnColorScan(acceptable, direction, errorNum, speed=200):
       else:
         color = errorNum
   
-    LeftMotor.stop()
+    RightMotor.stop()
 
-    if direction == 'in':
-      LeftMotor.run(speed)
-      print(robot.angle() - startAngle)
+    if direction == 'backward':
+      RightMotor.run(speed)
       while robot.angle() > startAngle:
         pass
-    elif direction == 'out':
-      LeftMotor.run(-speed)
-      print(robot.angle() - startAngle)
+    elif direction == 'forward':
+      RightMotor.run(-speed)
       while robot.angle() < startAngle:
         pass
 
-    LeftMotor.stop()
+    RightMotor.stop()
     return color
-    '''
 
 def mode(inputList):
   counter = 0
@@ -814,10 +806,3 @@ robot.stop()
 for i in times:
   print("total " + i + " time:", round(times[i], 2))
 print("\ntotal time:", round(round(round(time.time() - starttime, 2), 2), 2))
-
-markingColors = ["blue", "green"]
-pickupColors = ["blue", "blue", "green", "green"]
-'''
-print(f"marking: {markingColors[random.randint(0, len(markingColors) - 1)]}, {markingColors[random.randint(0, len(markingColors) - 1)]}")
-print(f"pickup: {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}, {pickupColors.pop(random.randint(0, len(pickupColors) - 1))}")
-'''
