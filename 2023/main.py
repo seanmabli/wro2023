@@ -114,13 +114,13 @@ def main():
 
   # ** CONTAINER SCAN **
   straight(-10, speed=100)
-  durn(turn=-70, type="pivot", speed=300)
+  durn(turn=-75, type="pivot", speed=300)
   containerColors[2] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
-  durn(turn=-20, type="pivot", speed=300)
+  durn(turn=-15, type="pivot", speed=300)
   containerColors[1] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
   durn(turn=-30, type="pivot", speed=300)
   containerColors[0] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
-  durn(turn=-35.5, type="pivot", speed=300)
+  durn(turn=-37, type="pivot", speed=300)
   print(containerColors)
   containerColors, replaceRandomly = calculateColors(containerColors, markingBlocks)
   print("real scan:", containerColors)
@@ -189,17 +189,18 @@ def main():
   durn(turn=-180, type="pivot", speed=400)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=300, proportion=1.2)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=10, whitethreshold=45, speed=400, blacks=2)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=11, whitethreshold=45, speed=400, blacks=2)
   straightUntilBlack(direction=-1, speed=200)
   straight(140)
-  durn(turn=-195, type="tank", speed=200)
+  durn(turn=-215, type="tank", speed=300)
   straight(35)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
-  durn(turn=-430, type="tank", speed=300)
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
-  durn(turn=20, type="tank")
-  straight(-290)
+  lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
+  durn(turn=-320, type="tank")
+  time.sleep(2)
+  sweep(sensor=LeftColor, direction="right", whiteFirst=True, speed=200, threshold=(10, 15), reverse=True)
+  time.sleep(2)
+  straight(-300)
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
@@ -207,9 +208,7 @@ def main():
   durn(turn=120, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
   lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
-  time.sleep(1)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=400, blacks=2)
-  time.sleep(1)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=11, whitethreshold=45, speed=400, blacks=2)
   straightUntilBlack(direction=-1, speed=200)
   straight(130)
   durn(turn=-172, type="tank", speed=200)
@@ -480,7 +479,6 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=No
   white = 0
   oppositeColor = LeftColor if sensor == RightColor else RightColor
   while count < blacks:
-    print(oppositeColor.reflection())
     if whitethreshold == None:
       if oppositeColor.reflection() < blackthreshold:
         count += 1
