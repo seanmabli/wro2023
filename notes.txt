@@ -2,3 +2,12 @@
 - Crane B
 - Height of pickup blocks
 - Changed white scooch but haven't tested it
+
+10-22-2023
+- Blue block on small boat (move pos to middle)
+- Angle approching white block
+- Turn and Sweep before Crane B
+
+10-28-2023
+- Made change to go forward more before small boat (maybe more work grabbing small boat)
+- Work on white block pickup

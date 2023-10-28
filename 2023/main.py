@@ -120,7 +120,7 @@ def main():
   containerColors[1] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
   durn(turn=-30, type="pivot", speed=300)
   containerColors[0] = turnColorScan(acceptable=[1, 2], direction="forward", errorNum=3, speed=200)
-  durn(turn=-37, type="pivot", speed=300)
+  durn(turn=-38, type="pivot", speed=300)
   print(containerColors)
   containerColors, replaceRandomly = calculateColors(containerColors, markingBlocks)
   print("real scan:", containerColors)
@@ -190,17 +190,18 @@ def main():
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 15), reverse=True)
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=300, proportion=1.2)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=11, whitethreshold=45, speed=400, blacks=2)
+  time.sleep(0.2)
   straightUntilBlack(direction=-1, speed=200)
   straight(140)
   durn(turn=-215, type="tank", speed=300)
   straight(35)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(10, 15), reverse=True)
   lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
-  durn(turn=-320, type="tank")
-  time.sleep(2)
-  sweep(sensor=LeftColor, direction="right", whiteFirst=True, speed=200, threshold=(10, 15), reverse=True)
-  time.sleep(2)
-  straight(-300)
+  durn(turn=-330, type="tank")
+  sweep(sensor=LeftColor, direction="right", whiteFirst=True, speed=100, threshold=(0, 8), reverse=True)
+  straight(-60)
+  durn(turn=20, type="tank")
+  straight(-190)
   _thread.start_new_thread(boatGrab, ("open",))
 
   # ** PICKUP SMALL BOAT **
@@ -209,6 +210,7 @@ def main():
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
   lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=11, whitethreshold=45, speed=400, blacks=2)
+  straight(10)
   straightUntilBlack(direction=-1, speed=200)
   straight(130)
   durn(turn=-172, type="tank", speed=200)
@@ -234,15 +236,25 @@ def main():
       armGrab("down->mid", speed=greenArmMidSpeed)
       newPosition, boatIndex = accurateSmallBoatDropoff(position, smallBoatPositions, smallBoatAvailable, containerColor=1)
       position += straight(newPosition - position + 10, deceleration=True)  
+      if boatIndex == 0:
+        durn(turn=-22, type="pivot", speed=200)
       armGrab("mid->up", speed=greenArmUpSpeed)
       time.sleep(0.3)
+      if boatIndex == 0:
+        durn(turn=-22, fb="backward", type="pivot", speed=200)
     else: # blue
       armGrab("up->down", speed=blueArmDownSpeed)
       armGrab("down->mid", speed=blueArmMidSpeed)
       newPosition, boatIndex = accurateSmallBoatDropoff(position, smallBoatPositions, smallBoatAvailable, containerColor=2)
       position += straight(newPosition - position, deceleration=True)
+      if boatIndex == 1:
+        durn(turn=-20, fb="backward", type="pivot", speed=200)
+        straight(-20, speed=200)
       armGrab("mid->up", speed=blueArmUpSpeed)
       time.sleep(0.3)
+      if boatIndex == 1:
+        straight(20, speed=200)
+        durn(turn=-20, type="pivot", speed=200)
     containerColors[containerIndex] = 3
     smallBoatAvailable[boatIndex] = False
 
