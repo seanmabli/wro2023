@@ -11,3 +11,8 @@
 10-28-2023
 - Made change to go forward more before small boat (maybe more work grabbing small boat)
 - Work on white block pickup
+
+10-29-2023
+- Possible durn change for turn before the special container into Crane B (replace 1 sweep with 2 sweep)
+- Fix sweep on return to small boat pickup
+- Further calibrate white pickup (possibly with color A)
