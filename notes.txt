@@ -16,3 +16,8 @@
 - Possible durn change for turn before the special container into Crane B (replace 1 sweep with 2 sweep)
 - Fix sweep on return to small boat pickup
 - Further calibrate white pickup (possibly with color A)
+
+11-7-2023
+- Adjust RGB to color
+- Adjust the black threshold and white threshold for straight, line following to black
+- Change target values in both line follwoing and sweep (499, 575, 660)
