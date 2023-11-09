@@ -21,3 +21,28 @@
 - Adjust RGB to color
 - Adjust the black threshold and white threshold for straight, line following to black
 - Change target values in both line follwoing and sweep (499, 575, 660)
+
+  # ** SMALL BOAT OUT TO SEA **
+  position += straight(265 - position, deceleration=True)
+  durn(turn=-170, fb="backward", type="pivot", speed=400)
+  straight(-25, deceleration=True)
+  boatGrab(movement="close")
+  straight(-300)
+  straightUntilBlack(direction=-1, colorSensor=RightColor)
+  durn(turn=180, type="pivot", speed=400)
+  boatGrab(movement="open")
+  sweep(sensor=LeftColor, direction="right", whiteFirst=True, speed=100, threshold=(12, 15), reverse=True)
+  lineFollowingDistance(distance=500, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
+  durn(turn=310, type="tank", speed=400)
+  straight(-300)
+  boatGrab(movement="close")
+  straight(300)
+  durn(turn=20, type="tank", speed=400)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(12, 20), reverse=True)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400, proportion=1.2)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=14, whitethreshold=45, speed=400, blacks=3)
+  durn(turn=310, type="tank", speed=400)
+  straight(-300)
+  boatGrab(movement="open")
+  durn(turn=-165, type="tank", speed=400)
+  straight(300, speed="dc")
