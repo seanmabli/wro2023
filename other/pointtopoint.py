@@ -6,11 +6,10 @@ from pybricks.parameters import Port, Color, Button, Direction
 from pybricks.robotics import DriveBase
 import time, _thread, random
 
-
 ArmMotor = Motor(Port.A)
 RightMotor = Motor(Port.B)
 LeftMotor = Motor(Port.C, Direction.COUNTERCLOCKWISE)
-BoatMotor = Motor(Port.D)
+BoatMotor = Motor(Port.D, Direction.COUNTERCLOCKWISE)
 
 ColorA = ColorSensor(Port.S1) # Name TBD
 LeftColor = ColorSensor(Port.S2)
@@ -42,32 +41,38 @@ def main():
   Light Blue - 12
   White - 62
   Gray - 42
+
+  International Colors:
+  Black - 11
+  Dark Blue - 18, 16
+  Light Blue - 19, 15
+  White - 82
+  Gray - 56
   '''
+
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
-  containerPositions = [225, 115, 25, -85]
-  largeBoatPositions = [185, 105, 0, -40] # largeBoatPositions[2] is not accurate because it is never used
-  smallBoatPositions = [55, -20]
+  containerPositions = [225, 115, 25, -95]
+  largeBoatPositions = [185, 90, 0, -50] # largeBoatPositions[2] is not accurate because it is never used
+  smallBoatPositions = [50, -20]
   largeBoatAvailable = [True, True, False, True]
   smallBoatAvailable = [True, True]
   whitePosition = 800
   markingBlocks = [3, 3]
   greenArmMidSpeed = 300
   greenArmUpSpeed = 200
-  greenArmDownSpeed = 350
+  greenArmDownSpeed = 400
   blueArmMidSpeed = 150
   blueArmUpSpeed = 100
-  blueArmDownSpeed = 375
+  blueArmDownSpeed = 400
 
   # ** Base to Intersection A (Includes Marking Block Scan) **
   '''
-  straight(115)
+  straight(95)
   sweep(sensor=LeftColor, direction="left")
-  lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.8)
-  time.sleep(0.1)
+  lineFollowingDistance(distance=195, sensor=LeftColor, sideofsensor='out', speed=200)
   markingBlocks[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200)
   lineFollowingDistance(distance=10, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.2)
-  time.sleep(0.1)
   markingBlocks[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
   print("markingBlocks:", markingBlocks)
   markingBlocks = fixWithRandom(markingBlocks)
@@ -83,20 +88,20 @@ def main():
   '''
   straight(170)
   durn(turn=-180, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 10))
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300, proportion=0.8)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 14))
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300, proportion=0.8)
   '''
 
   # ** Intersection B (from Intersection A) to Intersection C (No Sweep) **
   '''
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
   '''
 
   # ** Intersection C (from Intersection B) to Intersection D (No Sweep) **
   '''
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
   '''
 
   # ** Intersection B (from Intersection A) to Small Ship **
@@ -158,8 +163,8 @@ def main():
   '''
   straight(130)
   durn(turn=-155, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 10))
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300, proportion=0.8)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 14))
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300, proportion=0.8)
   '''
 
   # ** Intersection C (from Intersection D) to Crane A **
@@ -181,7 +186,7 @@ def main():
   # ** Intersection C (from Intersection D) to Intersection B **
   '''
   lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=12, whitethreshold=45, speed=300)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
   '''
 
   # ** Intersection B (from Intersection C) to Green/Blue Containers **
@@ -207,7 +212,7 @@ def main():
   sturn(rl="left", fb="forward", turn=70)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True)
   lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=10, whitethreshold=45, speed=300)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
   '''
 
   # ** Intersection A (from Intersection B) to Base **
@@ -222,6 +227,22 @@ def main():
   straight(120)
   durn(turn=-165, type="tank", speed=200)
   straight(480)
+  '''
+
+  # ** Big Arm Open and Close **
+  '''
+  bigArmGrab("open", speed=100)
+  bigArmGrab("close", speed=100)
+  bigArmGrab("open", speed=100)
+  bigArmGrab("close", speed=100)
+  '''
+
+  # ** Lift Arm Up and Down **
+  '''
+  liftGrab("down", speed=100)
+  straight(100)
+  liftGrab("up", speed=100)
+  straight(-100)
   '''
 
 def fixWithRandom(scan):
@@ -302,7 +323,7 @@ def replaceWithRandom(colorList):
   return colorList
 
 def rgbtocolor(rgb): # None = 0, green = 1, blue = 2
-  if sum(rgb) < 2:
+  if sum(rgb) < 1:
     return 0
   elif rgb[2] > (rgb[0] + rgb[1]) * 1.25:
     return 2
@@ -340,7 +361,7 @@ def straightUntilBlack(direction=1, speed=400, angled=False, colorSensor=None):
     if not angled:
       while (RightColor.reflection() + LeftColor.reflection()) / 2 < 45:
         robot.drive(speed * direction, 0)
-      while (RightColor.reflection() + LeftColor.reflection()) / 2 > 15:
+      while (RightColor.reflection() + LeftColor.reflection()) / 2 > 20:
         robot.drive(speed * direction / 2, 0)
       robot.stop()
     else:
@@ -354,9 +375,9 @@ def straightUntilBlack(direction=1, speed=400, angled=False, colorSensor=None):
           white[1] = True
         if (white[0] and white[1]):
           percentage = 0.5
-        if (RightColor.reflection() + LeftColor.reflection()) / 2 < 15:
+        if (RightColor.reflection() + LeftColor.reflection()) / 2 < 20:
           line[0] = True
-        if (RightColor.reflection() + LeftColor.reflection()) / 2 < 15:
+        if (RightColor.reflection() + LeftColor.reflection()) / 2 < 20:
           line[1] = True
         robot.drive(speed * direction * percentage, 0)
   else:
@@ -406,7 +427,7 @@ def durn(turn, circleradius=30, type='tank', fb='forward', speed=400, decelerati
     RightMotor.hold()
 
 @timefunc
-def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=None, outprop=None, speed=[], estdistance=0, blackthreshold=10, whitethreshold=None):
+def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=None, outprop=None, speed=[], estdistance=0, blackthreshold=14, whitethreshold=None):
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if sideofsensor not in ['in', 'out']:
@@ -434,7 +455,7 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=No
   inprop = inprop if inprop != None else proportion
   outprop = outprop if outprop != None else proportion
 
-  target = (8 + 76) / 2 # Black  = 8, White = 76
+  target = (11 + 82) / 2 # Black  = 8, White = 76
   count = 0
 
   lastdistance = abs(robot.distance())
@@ -443,7 +464,6 @@ def lineFollowingBlack(sensor, sideofsensor, blacks=1, proportion=0.4, inprop=No
   white = 0
   oppositeColor = LeftColor if sensor == RightColor else RightColor
   while count < blacks:
-    print(oppositeColor.reflection())
     if whitethreshold == None:
       if oppositeColor.reflection() < blackthreshold:
         count += 1
@@ -511,7 +531,7 @@ def lineFollowingDistance(distance, sensor=RightColor, sideofsensor='in', speed=
   inprop = inprop if inprop != None else proportion
   outprop = outprop if outprop != None else proportion
 
-  target = (8 + 76) / 2 # Black  = 8, White = 76
+  target = (11 + 82) / 2 # Black  = 8, White = 76
 
   lastdistance = 0
   num = 0
@@ -587,11 +607,12 @@ def armGrab(movement, speed=None):
     time.sleep(0.2)
     ArmMotor.hold()
 
+
 @timefunc
 def bigArmGrab(movement="open", percentage=1, hold=False, stop=False, speed=400):
   if movement == "open":
     BoatMotor.stop()
-    BoatMotor.run_angle(-speed, 80 * percentage)
+    BoatMotor.run_angle(-speed, 60 * percentage)
     time.sleep(0.01)
   elif movement == "close":
     BoatMotor.run(speed)
@@ -604,19 +625,19 @@ def bigArmGrab(movement="open", percentage=1, hold=False, stop=False, speed=400)
 @timefunc
 def liftGrab(movement="down", percentage=1, hold=False, stop=False, speed=400):
   if movement == "down":
-    BoatMotor.stop()
-    BoatMotor.run_angle(-speed, 120 * percentage)
+    ArmMotor.stop()
+    ArmMotor.run_angle(-speed, 130 * percentage)
     time.sleep(0.01)
   elif movement == "up":
-    BoatMotor.run(speed)
-    time.sleep(0.05 * percentage * (400 / speed))
+    ArmMotor.run(speed)
+    time.sleep(0.35 * percentage * (400 / speed))
     if hold:
-      BoatMotor.hold()
+      ArmMotor.hold()
     if stop:
-      BoatMotor.stop()
-      
+      ArmMotor.stop()
+
 @timefunc
-def sweep(sensor, direction, speed=100, whiteFirst=False, threshold=(0, 10), reverse=False):
+def sweep(sensor, direction, speed=100, whiteFirst=False, threshold=(0, 12), reverse=False):
   if sensor not in [RightColor, LeftColor]:
     raise Exception('sensor must be RightColor or LeftColor')
   if direction not in ['right', 'left']:
@@ -624,7 +645,7 @@ def sweep(sensor, direction, speed=100, whiteFirst=False, threshold=(0, 10), rev
 
   startangle = robot.angle()
   info = []
-  target = (8 + 76) / 2 # Black  = 8, White = 76
+  target = (11 + 82) / 2 # Black  = 8, White = 76
   
   if direction == 'right':
     robot.drive(0, speed)
@@ -737,8 +758,10 @@ def colorScan(acceptable, direction, errorNum, outTurnIncrease=1, speed=200):
 
 @timefunc
 def turnColorScan(acceptable, direction, errorNum, speed=200):
+  print("rgb")
   outColor, outRGB = rgbtocolor(ColorA.rgb()), ColorA.rgb()
   if outColor in acceptable:
+    print(outColor, ColorA.rgb())
     return outColor
   else:
     startAngle = robot.angle()
@@ -750,11 +773,12 @@ def turnColorScan(acceptable, direction, errorNum, speed=200):
 
     color = None
     colorList = []
-    while color not in acceptable and abs(startAngle - robot.angle()) < 40:
+    while color not in acceptable and abs(startAngle - robot.angle()) < 25:
       outColor = rgbtocolor(ColorA.rgb())
+      print(outColor, ColorA.rgb())
       if outColor in acceptable:
         colorList.append(outColor)
-        if len(colorList) >= 5:
+        if len(colorList) >= 3:
           color = mode(colorList)
 
     if color == None:

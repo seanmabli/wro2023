@@ -229,6 +229,22 @@ def main():
   straight(480)
   '''
 
+  # ** Big Arm Open and Close **
+  '''
+  bigArmGrab("open", speed=100)
+  bigArmGrab("close", speed=100)
+  bigArmGrab("open", speed=100)
+  bigArmGrab("close", speed=100)
+  '''
+
+  # ** Lift Arm Up and Down **
+  '''
+  liftGrab("down", speed=100)
+  straight(100)
+  liftGrab("up", speed=100)
+  straight(-100)
+  '''
+
 def fixWithRandom(scan):
   for i in range(len(scan)):
     if scan[i] == 3 and scan[0 if i == 1 else 1] == 1:
@@ -590,6 +606,35 @@ def armGrab(movement, speed=None):
     ArmMotor.run(-400)
     time.sleep(0.2)
     ArmMotor.hold()
+
+
+@timefunc
+def bigArmGrab(movement="open", percentage=1, hold=False, stop=False, speed=400):
+  if movement == "open":
+    BoatMotor.stop()
+    BoatMotor.run_angle(-speed, 60 * percentage)
+    time.sleep(0.01)
+  elif movement == "close":
+    BoatMotor.run(speed)
+    time.sleep(0.15 * percentage * (400 / speed))
+    if hold:
+      BoatMotor.hold()
+    if stop:
+      BoatMotor.stop()
+
+@timefunc
+def liftGrab(movement="down", percentage=1, hold=False, stop=False, speed=400):
+  if movement == "down":
+    ArmMotor.stop()
+    ArmMotor.run_angle(-speed, 130 * percentage)
+    time.sleep(0.01)
+  elif movement == "up":
+    ArmMotor.run(speed)
+    time.sleep(0.35 * percentage * (400 / speed))
+    if hold:
+      ArmMotor.hold()
+    if stop:
+      ArmMotor.stop()
 
 @timefunc
 def sweep(sensor, direction, speed=100, whiteFirst=False, threshold=(0, 12), reverse=False):
