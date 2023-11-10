@@ -51,10 +51,10 @@ def main():
   '''
 
   containerColors = [3, 3, 3, 3] # 1 = green, 2 = blue, 3 = not scaned / error
-  containerPositions = [225, 115, 25, -95]
-  largeBoatPositions = [185, 90, 0, -50] # largeBoatPositions[2] is not accurate because it is never used
+  newContainerPositions = [395, -270]
+  largeBoatPositions = [140, 80, 0, -50] # largeBoatPositions[2] is not accurate because it is never used
   smallBoatPositions = [50, -20]
-  largeBoatAvailable = [True, True, False, True]
+  largeBoatAvailable = [True, True, False, False]
   smallBoatAvailable = [True, True]
   whitePosition = 800
   markingBlocks = [3, 3]
@@ -65,185 +65,126 @@ def main():
   blueArmUpSpeed = 100
   blueArmDownSpeed = 400
 
-  # ** Base to Intersection A (Includes Marking Block Scan) **
-  '''
-  straight(95)
-  sweep(sensor=LeftColor, direction="left")
-  lineFollowingDistance(distance=195, sensor=LeftColor, sideofsensor='out', speed=200)
-  markingBlocks[0] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200)
-  lineFollowingDistance(distance=10, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.2)
-  markingBlocks[1] = colorScan(acceptable=[1, 2], direction="out", errorNum=3, speed=300)
-  print("markingBlocks:", markingBlocks)
-  markingBlocks = fixWithRandom(markingBlocks)
-  print("markingBlocks + random if poorly scaned:", markingBlocks)
-  '''
-
-  # ** Intersection A to Fuel **
-  '''
-  straight(500)
-  '''
-
-  # ** Intersection A (from Base) to Intersection B **
-  '''
-  straight(170)
-  durn(turn=-180, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 14))
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300, proportion=0.8)
-  '''
-
-  # ** Intersection B (from Intersection A) to Intersection C (No Sweep) **
-  '''
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
-  '''
-
-  # ** Intersection C (from Intersection B) to Intersection D (No Sweep) **
-  '''
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
-  '''
-
-  # ** Intersection B (from Intersection A) to Small Ship **
-  '''
-  lineFollowingDistance(distance=180, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=-180, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=225, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  '''
-
-  # ** Intersection B (from Intersection A) to Green/Blue Containers or Intersection C (from Intersection B) to White Containers **
-  '''
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=160, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=300, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  '''
-  
-  # ** Intersection C (from Intersection B) to Crane A **
-  '''
-  lineFollowingDistance(distance=170, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=-180, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=350, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  '''
-
-  # ** Intersection D (from Intersection B) to Crane B **
-  '''
-  straightUntilBlack(direction=-1, speed=200)
-  straight(170)
-  durn(turn=-180, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=350, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  '''
-
-  # ** Intersection D (from Intersection C) to Open Ocean Base **
-  '''
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=160, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=250, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  straight(200)
-  '''
-
   # ** Open Ocean Base to Intersection D **
-  '''
   straight(115)
   sweep(sensor=LeftColor, direction="left")
   lineFollowingDistance(distance=140, sensor=LeftColor, sideofsensor='out', speed=200, proportion=0.8)
   lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200)
-  '''
-
-  # ** Intersection D (from Open Ocean Base, No Sweep) to Crane B **
-  '''
-  lineFollowingDistance(distance=480, sensor=LeftColor, sideofsensor='out')
-  '''
 
   # Intersection D (from Open Ocean Base) to Intersection C **
-  '''
-  straight(130)
-  durn(turn=-155, type="tank")
+  straight(145)
+  durn(turn=-168, type="tank", speed=200)
   sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 14))
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300, proportion=0.8)
-  '''
+  lineFollowingDistance(distance=600, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=100)
+  straight(-15)
 
-  # ** Intersection C (from Intersection D) to Crane A **
-  '''
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=160, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=350, sensor=LeftColor, sideofsensor='out', speed=300)
-  '''
-
-  # ** Intersection C (from Intersection D) to White Containers **
-  '''
-  lineFollowingDistance(distance=180, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=-160, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=380, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  '''
-
-  # ** Intersection C (from Intersection D) to Intersection B **
-  '''
-  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
-  '''
-
-  # ** Intersection B (from Intersection C) to Green/Blue Containers **
-  '''
-  lineFollowingDistance(distance=160, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=-175, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=280, sensor=LeftColor, sideofsensor='out', speed=300, proportion=0.8)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, speed=100)
-  lineFollowingDistance(distance=55, sensor=LeftColor, sideofsensor='out', speed=100)
-  '''
-
-  # ** Intersection B (from Intersection C) to Small Ship **
-  '''
-  lineFollowingDistance(distance=95, sensor=LeftColor, sideofsensor='in', speed=400)
-  durn(turn=150, type="tank")
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=200)
-  lineFollowingDistance(distance=150, sensor=LeftColor, sideofsensor='out', speed=300)
-  '''
-  
-  # ** Intersection B (from Intersection C) to Intersection A **
-  '''
-  sturn(rl="left", fb="forward", turn=70)
-  sweep(sensor=LeftColor, direction="left", whiteFirst=True)
-  lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
-  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
-  '''
-
-  # ** Intersection A (from Intersection B) to Base **
-  '''
-  straight(100)
-  durn(turn=165, type="tank")
-  straight(260)
-  '''
-
-  # ** Intersection A (from Intersection B) to Fuel **
-  '''
-  straight(120)
+  # ** Pickup Big Boat **
   durn(turn=-165, type="tank", speed=200)
-  straight(480)
-  '''
+  straight(-180)
+  durn(turn=-155, type="tank", speed=200)
+  straight(-260)
+  boatGrab("close")
+  durn(turn=155, type="tank")
+  straightUntilBlack()
+  straight(130)
+  durn(turn=100, type="tank", speed=200)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 14))
+  
+  # ** Intersection C (from Intersection D) to Intersection B **
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
+  lineFollowingDistance(distance=185, sensor=LeftColor, sideofsensor='out', speed=300)
 
-  # ** Big Arm Open and Close **
-  '''
-  bigArmGrab("open", speed=100)
-  bigArmGrab("close", speed=100)
-  bigArmGrab("open", speed=100)
-  bigArmGrab("close", speed=100)
-  '''
+  # ** Move to Big Boat Pickup **
+  durn(turn=-180, type="tank")
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 14))
+  lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=100)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=20, speed=100)
+  lineFollowingDistance(distance=80, sensor=LeftColor, sideofsensor='out', speed=100)
+  straight(-380, speed=100)
+  boatGrab(movement="open")
+  straight(-10, speed=200)
+  durn(turn=-170, type="pivot", speed=300)
 
-  # ** Lift Arm Up and Down **
-  '''
-  liftGrab("down", speed=100)
-  straight(100)
-  liftGrab("up", speed=100)
+  # ** CONTAINER PICKUP **
+  straight(-150, deceleration=True)
+  straightUntilBlack(direction=-1, speed=200, colorSensor=LeftColor)
+  position = 0
+
+  for i in range(2):
+    position += straight(newContainerPositions[i] - position, deceleration=True)
+    armGrab("up->down", speed=greenArmDownSpeed)
+    armGrab("down->mid", speed=greenArmMidSpeed)
+    newPosition, boatIndex = closestBoatDropoff(position, largeBoatPositions, largeBoatAvailable)
+    position += straight(newPosition - position + 10, deceleration=True)
+    durn(turn=-28, type="pivot", speed=200)
+    armGrab("mid->up", speed=greenArmUpSpeed)
+    time.sleep(0.3)
+    durn(turn=-30, fb="backward", type="pivot", speed=200)
+    largeBoatAvailable[boatIndex] = False
+
+  # ** MOVE LARGE BOAT OUT TO SEA **
+  position = calibratePos(position)
+  position += straight(300 - position, deceleration=True)
+  durn(turn=-170, fb="backward", type="pivot", speed=400)
+  straight(-80, deceleration=True)
+  boatGrab(movement="close")
   straight(-100)
-  '''
+  straightUntilBlack(direction=-1, colorSensor=RightColor)
+  durn(turn=-180, type="pivot", speed=400)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100, threshold=(0, 17), reverse=True)
+  lineFollowingDistance(distance=60, sensor=LeftColor, sideofsensor='in', speed=200, proportion=1.2)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=15, whitethreshold=45, speed=300)
+  lineFollowingDistance(distance=340, sensor=LeftColor, sideofsensor='in', speed=200)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='in', blackthreshold=14, whitethreshold=40, speed=300)
+  straight(100)
+  durn(turn=330, type="tank", speed=400)
+  boatGrab("open")
+  
+  # Go to Small Boat
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
+  lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=400)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200, proportion=0.2)
+  straight(15)
+  straightUntilBlack(direction=-1, speed=200)
+  straight(130)
+  durn(turn=-162, type="tank", speed=200)
+  _thread.start_new_thread(boatGrab, ("close", 0.1, True))
+
+  # Move Small Boat to Base
+  straight(-365)
+  boatGrab(movement="close", percentage=0.9)
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, speed=100)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200, proportion=0.8)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=200)
+  durn(turn=165, type="tank", speed=200)
+
+  # ** Intersection B (from Intersection C) to Intersection A **
+  sturn(rl="left", fb="forward", turn=100)
+  sweep(sensor=RightColor, direction="right", whiteFirst=True, speed=150, threshold=(0, 14))
+  lineFollowingDistance(distance=200, sensor=RightColor, sideofsensor='out', speed=400, proportion=0.8)
+  lineFollowingBlack(sensor=RightColor, sideofsensor='out', blackthreshold=14, whitethreshold=45, speed=300)
+  straight(100)
+  durn(turn=-165, type="tank", speed=200)
+  straight(-200)
+  boatGrab(movement="open")
+  straight(770)
+  straight(-540)
+  durn(turn=-160, type="pivot")
+  sweep(sensor=LeftColor, direction="left", whiteFirst=True, threshold=(0, 30), reverse=True)
+
+  # ** Back to Base ** 
+  lineFollowingDistance(distance=200, sensor=LeftColor, sideofsensor='out', speed=400, proportion=0.8)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=400)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=400)
+  lineFollowingDistance(distance=100, sensor=LeftColor, sideofsensor='out', speed=400)
+  lineFollowingBlack(sensor=LeftColor, sideofsensor='out', blackthreshold=15, whitethreshold=45, speed=200, proportion=0.2)
+  durn(turn=165, type="tank", speed=400)
+  straight(300, speed="dc")
 
 def fixWithRandom(scan):
   for i in range(len(scan)):
